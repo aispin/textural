@@ -1,21 +1,25 @@
-# 发布：release-please 依据 Conventional Commits 决定版本号，合并 Release PR 时才真正发出去
+# 发布：release-please 依据 Conventional Commits 决定版本号，然后直接发版（不开 Release PR）。
 #
-# 流程：
-#   推 main（带 feat:/fix: 等）→ release-please 自动开/更新一个 Release PR
-#     （PR 里已经改好 package.json 的 version 与 CHANGELOG.md）
-#   → 你 review 并合并它 → 本次 workflow 打 tag、建 GitHub Release、npm publish
-#   docs: / chore: / ci: / style: / refactor: 这类 commit 不会触发发版。
+# 推 main → 分析提交 → 有 feat/fix 就：打 tag、建 GitHub Release、npm publish
+#   fix: → patch ｜ feat: → minor ｜ feat!: 或 body 里写 BREAKING CHANGE: → major
+#   docs: / chore: / ci: / style: / refactor: → 不发版
 #
-#   版本规则：feat: → minor ｜ fix: → patch ｜ feat!: 或 body 里写 BREAKING CHANGE: → major
+# 为什么不开 Release PR（试过，两条死路）：
+#   1) 让 release-please 开 PR + 挂 GitHub 原生 auto-merge：auto-merge 要求目标分支配了
+#      分支保护规则，否则报 "Protected branch rules not configured for this branch"。
+#   2) 退回「workflow 里用 gh pr merge 合并」：GITHUB_TOKEN 合并产生的 push 不触发下游
+#      workflow（防递归），而且**workflow 无法再给这次合并创建 Release**
+#      （实测 403 Resource not accessible by integration，而 token 权限确实是 contents: write）。
+#   所以这里用 `skip-github-pull-request: true`：不开 PR，直接建 tag + Release。
+#   需要人工闸门时：把 npmjs.com 的 Allowed actions 改成只允许 `npm stage publish`，
+#   再把下面的 `npm publish` 换成 `npm stage publish`，之后每版都要维护者过 2FA 批准。
 #
-# 认证：走 npm Trusted Publishing（OIDC），仓库里不需要任何令牌，provenance 自动生成。
-#   ⚠️ npmjs.com → @aifire/textural → Settings → Trusted Publisher 里绑定的 workflow 文件名
-#      必须仍是 **publish.yml**（这个名字是刻意保留的，改名要同步改 npm 上的配置）。
-#   ⚠️ 想给每次发版加人工闸门：Allowed actions 只勾 `npm stage publish`，
-#      再把下面的 `npm publish` 换成 `npm stage publish`，然后到 npmjs.com 的
-#      Staged Packages 页用 2FA 批准（staged publishing 只能用于已存在的包）。
-#   ⚠️ 绑好 Trusted Publisher 之前不要合并 Release PR：否则 tag 与 GitHub Release 会先建出来，
-#      而 npm publish 会因为拿不到凭证失败。
+# 认证：npm Trusted Publishing（OIDC），仓库里没有任何令牌，provenance 自动生成。
+#   ⚠️ npmjs.com → @aifire/textural → Settings → Trusted Publisher 绑定的 workflow 文件名
+#      必须仍是 **publish.yml**。
+#
+# 手动补发（比如某次 tag 建好了但 npm publish 失败）：Actions → Release → Run workflow，
+# 勾上 publish_current_version，会按 package.json 当前版本重新构建并发布。
 
 name: Release
 
@@ -23,11 +27,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_current_version:
+        description: '跳过版本判定，直接按 package.json 当前版本构建并发布（补发用）'
+        type: boolean
+        default: false
 
 permissions:
-  contents: write        # 打 tag、建 GitHub Release
-  pull-requests: write   # 开/更新 Release PR
-  id-token: write        # OIDC：Trusted Publishing 的必需品
+  contents: write   # 打 tag、建 GitHub Release
+  id-token: write   # OIDC：Trusted Publishing 的必需品
 
 concurrency:
   group: release
@@ -36,77 +44,52 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.flag.outputs.publish }}
     steps:
-      # 1) 开/更新 Release PR；合并 Release PR 的那次运行会返回 release_created=true
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          skip-github-pull-request: true
 
-      # 让 Release PR 自己合，然后把发版流程再踢一脚。
-      #
-      # 两个坑都在这里踩平了：
-      #   1) 不能只挂 GitHub 的 auto-merge：它要求目标分支配了分支保护规则
-      #      （实测报 "Protected branch rules not configured for this branch"）。
-      #   2) 用 GITHUB_TOKEN 合并产生的 push **不会**触发下游 workflow（GitHub 防递归），
-      #      所以合并之后必须显式 dispatch 一次 Release + Pages，
-      #      否则 tag/Release/npm 发布和站点重部署都不会发生。
-      #      （workflow_dispatch 是唯二不受该限制的事件之一。）
-      #
-      # 想恢复人工闸门：删掉这一步即可。
-      - name: Merge the release PR and kick the release run
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: flag
+        name: Decide whether to publish
         run: |
           set -euo pipefail
-          # 按分支名找，不按 label：label（autorelease: pending）是 release-please
-          # 建完 PR 之后才补上的，早几秒跑会查不到（踩过）。
-          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
-                  --json number,headRefName \
-                  --jq '[.[] | select(.headRefName | startswith("release-please--"))][0].number // empty')"
-          if [ -z "$pr" ]; then
-            echo "本次没有待处理的 Release PR"
-            exit 0
-          fi
-          gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --merge
-          echo "已合并 Release PR #$pr"
-          sleep 5
-          gh workflow run Release --repo "$GITHUB_REPOSITORY" --ref main
-          gh workflow run "Deploy demo to GitHub Pages" --repo "$GITHUB_REPOSITORY" --ref main
-          echo "已重新触发生成 tag / npm 发布 / 站点重部署"
+          publish="${{ steps.release.outputs.release_created == 'true' || inputs.publish_current_version == true }}"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "release_created=${{ steps.release.outputs.release_created }} / forced=${{ inputs.publish_current_version }} → publish=$publish"
 
-      # 2) 只有真的要发版时，才构建并发布（非发版的推送在这里就结束了）
-      - if: ${{ steps.release.outputs.release_created }}
-        uses: actions/checkout@v4
+  publish:
+    needs: release
+    if: needs.release.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - if: ${{ steps.release.outputs.release_created }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           # 不传 registry-url：避免 .npmrc 里出现空的 ${NODE_AUTH_TOKEN} 干扰 OIDC；
           # registry 与 access 由 package.json 的 publishConfig 提供。
 
       # Trusted Publishing 要 npm CLI ≥ 11.5.1，Node 自带的 npm 不保证够新。
-      - if: ${{ steps.release.outputs.release_created }}
-        name: Install latest npm
+      - name: Install latest npm
         run: |
           npm install -g npm@latest
           node -v && npm -v
 
-      - if: ${{ steps.release.outputs.release_created }}
-        name: Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - if: ${{ steps.release.outputs.release_created }}
-        name: Typecheck
+      - name: Typecheck
         run: npm run typecheck
 
-      - if: ${{ steps.release.outputs.release_created }}
-        name: Build
+      - name: Build
         run: npm run build
 
       # 不传 NODE_AUTH_TOKEN：npm CLI 在 GitHub Actions 里自动用 OIDC 换临时凭证。
-      - if: ${{ steps.release.outputs.release_created }}
-        name: Publish to npm
+      - name: Publish to npm
         run: npm publish
