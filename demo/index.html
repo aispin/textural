@@ -264,6 +264,9 @@ img,svg,canvas{display:block}
   position:relative;
   aspect-ratio: 1 / 1;
   border-radius: 16px;
+  /* 必须显式给背景：<button> 默认露出 UA 的 ButtonFace（#EFEFEF），
+     半透明描边叠在它上面，暗色模式里就成了一条刺眼的白线。 */
+  background: transparent;
   border: 1px solid var(--card-line);
   overflow:hidden;
   isolation:isolate;
@@ -964,7 +967,8 @@ footer{
 
       <div class="hero-content">
         <span class="badge">
-          <span class="pill" data-i18n="hero.badge.pill">v1.0</span>
+          <!-- 版本号由构建时注入（scripts/build.mjs --site 读 package.json 的 version） -->
+          <span class="pill" id="hero-version">v1.0.0</span>
           <span data-i18n="hero.badge.text">零依赖 · 4.8KB gzip</span>
         </span>
         <h1>
@@ -1287,7 +1291,6 @@ const I18N = {
     'nav.docs': '接入与配置',
     'nav.agents': 'Agent 接入',
 
-    'hero.badge.pill': 'v1.0',
     'hero.badge.text': '零依赖 · 4.8KB gzip',
     'hero.title.1': '把文字',
     'hero.title.2': '变成卡片背景',
@@ -1375,7 +1378,6 @@ const I18N = {
     'nav.docs': 'Docs & API',
     'nav.agents': 'For agents',
 
-    'hero.badge.pill': 'v1.0',
     'hero.badge.text': 'Zero deps · 4.8KB gzipped',
     'hero.title.1': 'Turn text into',
     'hero.title.2': 'card backgrounds',
