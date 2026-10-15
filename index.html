@@ -1,0 +1,2207 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Textural — Turn text into card backgrounds·把文字变成卡片背景</title>
+<meta name="description" content="把任意文字渲染成柔和、不抢镜的卡片背景：零依赖 5.8KB（gzip）的 JS 库，Canvas + WebGL 渲染，tile/flow/hero 三种排布，支持矢量 SVG 与 PNG 导出，TypeScript 类型随包发布。 Turn any word into a soft, unobtrusive card background: a zero-dependency 5.8KB (gzipped) library with Canvas + WebGL rendering, tile/flow/hero layouts, SVG and PNG export, and shipped TypeScript types." />
+<link rel="canonical" href="https://aispin.github.io/textural/" />
+
+<!-- 社交媒体 / 搜索结果预览 -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Textural" />
+<meta property="og:title" content="Textural — Turn text into card backgrounds·把文字变成卡片背景" />
+<meta property="og:description" content="零依赖 5.8KB 的文字底纹库：Canvas + WebGL，tile/flow/hero 三种排布，矢量 SVG 与 PNG 导出，TypeScript 类型齐全。 Zero-dependency 5.8KB textures from any text: tile/flow/hero layouts, SVG + PNG export, TypeScript types included." />
+<meta property="og:url" content="https://aispin.github.io/textural/" />
+<meta property="og:image" content="https://aispin.github.io/textural/assets/og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Textural — 把文字变成卡片背景" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Textural — Turn text into card backgrounds·把文字变成卡片背景" />
+<meta name="twitter:description" content="零依赖 5.8KB 的文字底纹库：tile/flow/hero 三种排布，矢量 SVG 与 PNG 导出，TypeScript 类型齐全。 Zero-dependency card textures from any text." />
+<meta name="twitter:image" content="https://aispin.github.io/textural/assets/og.jpg" />
+
+<!-- 结构化数据：让搜索引擎把它当成一个软件项目而不是普通网页 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Textural",
+  "alternateName": ["@aifire/textural"],
+  "softwareVersion": "1.3.1",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web browser",
+  "description": "把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas + WebGL，支持 tile/flow/hero 三种排布与矢量 SVG / PNG 导出，TypeScript 类型随包发布。",
+  "url": "https://aispin.github.io/textural/",
+  "codeRepository": "https://github.com/aispin/textural",
+  "downloadUrl": "https://www.npmjs.com/package/@aifire/textural",
+  "programmingLanguage": "TypeScript",
+  "license": "https://github.com/aispin/textural/blob/main/LICENSE",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "ZEO", "url": "https://github.com/aispin" }
+}
+</script>
+
+<meta name="theme-color" content="#4f6bff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#090b10" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="./assets/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="icon" href="./assets/favicon-48.png" sizes="48x48" type="image/png" />
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="application-name" content="Textural" />
+<meta name="apple-mobile-web-app-title" content="Textural" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<style>
+/* ==========================================================================
+   Design Tokens
+   ========================================================================== */
+:root{
+  --bg:        #fafbfd;
+  --bg-elev:   #ffffff;
+  --bg-sub:    #f2f4f8;
+  --fg:        #1a1f2c;
+  --fg-dim:    #5b6577;
+  --fg-mute:   #8b94a7;
+  --line:      rgba(20,30,60,.09);
+  --line-hi:   rgba(20,30,60,.16);
+  --card-line: rgba(20,30,60,.10);
+  --accent:    #4f6bff;
+  --accent-2:  #a678ff;
+  --panel:     rgba(20,30,60,.028);
+  --panel-hi:  rgba(20,30,60,.055);
+  --code-bg:   #0e1117;
+  --code-fg:   #cdd6f4;
+  --shadow-sm: 0 2px 8px rgba(20,30,60,.05);
+  --shadow-md: 0 12px 34px rgba(20,30,60,.09);
+  --shadow-lg: 0 28px 70px rgba(20,30,60,.14);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --font-sans: system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --bg:        #090b10;
+  --bg-elev:   #121620;
+  --bg-sub:    #0e121a;
+  --fg:        #e9edf5;
+  --fg-dim:    #9ba4b7;
+  --fg-mute:   #6b7488;
+  --line:      rgba(255,255,255,.09);
+  --line-hi:   rgba(255,255,255,.18);
+  --card-line: rgba(255,255,255,.055);
+  --accent:    #8ba3ff;
+  --accent-2:  #c39bff;
+  --panel:     rgba(255,255,255,.038);
+  --panel-hi:  rgba(255,255,255,.07);
+  --code-bg:   #05070b;
+  --code-fg:   #cdd6f4;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.4);
+  --shadow-md: 0 12px 34px rgba(0,0,0,.5);
+  --shadow-lg: 0 28px 70px rgba(0,0,0,.65);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{
+  background:var(--bg);
+  color:var(--fg);
+  transition: background-color .4s ease, color .4s ease;
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  font-family:var(--font-sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(1200px 800px at 20% -20%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 60%),
+    radial-gradient(1000px 800px at 100% 10%, color-mix(in oklab, var(--accent-2) 7%, transparent), transparent 60%);
+  pointer-events:none;
+  transition: opacity .4s;
+  opacity:.9;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+code,pre{font-family:var(--font-mono);font-size:13px}
+img,svg,canvas{display:block}
+
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ==========================================================================
+   Nav
+   ========================================================================== */
+.nav{
+  position:sticky;top:0;z-index:40;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  background: color-mix(in oklab, var(--bg) 72%, transparent);
+  border-bottom:1px solid transparent;
+  transition: border-color .3s, background-color .4s;
+}
+.nav.scrolled{ border-bottom-color: var(--line); }
+.nav-inner{
+  display:flex;align-items:center;gap:28px;
+  height:64px;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-weight:800;letter-spacing:-.02em;font-size:16px;
+  flex-shrink:0;
+}
+.brand-mark{
+  width:26px;height:26px;border-radius:8px;
+  box-shadow: 0 4px 14px color-mix(in oklab, var(--accent) 40%, transparent);
+  display:block;flex-shrink:0;
+}
+.nav-links{
+  display:flex;gap:4px;flex:1;
+  font-size:14px;color:var(--fg-dim);
+}
+.nav-links a{
+  padding:7px 12px;border-radius:8px;
+  transition: background-color .18s, color .18s;
+}
+.nav-links a:hover{ background:var(--panel); color:var(--fg) }
+
+.nav-tools{display:flex;gap:8px;align-items:center}
+
+.icon-btn{
+  width:36px;height:36px;border-radius:10px;
+  display:grid;place-items:center;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--fg-dim);
+  cursor:pointer;
+  transition: background-color .18s, color .18s, border-color .18s, transform .18s;
+}
+.icon-btn:hover{ background:var(--panel-hi); color:var(--fg); border-color:var(--line-hi) }
+.icon-btn:active{ transform: scale(.94) }
+.icon-btn svg{ width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round }
+
+.lang-toggle{
+  height:36px;padding:0 12px;
+  display:flex;align-items:center;gap:6px;
+  border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg-dim);
+  cursor:pointer;font-size:13px;font-weight:600;
+  transition: background-color .18s, color .18s, border-color .18s;
+}
+.lang-toggle:hover{ background:var(--panel-hi);color:var(--fg);border-color:var(--line-hi) }
+.lang-toggle .dot{ width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.4 }
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.hero{
+  position:relative;
+  padding: 64px 0 88px;
+}
+.hero-card{
+  position:relative;
+  border-radius: var(--radius-lg);
+  border:1px solid var(--line);
+  overflow:hidden;
+  box-shadow: var(--shadow-lg);
+  isolation:isolate;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+.hero-content{
+  position:relative;
+  z-index:3;
+  padding: 76px 64px 0;
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:22px;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px 6px 10px;
+  border-radius:999px;
+  border:1px solid var(--line-hi);
+  background: color-mix(in oklab, var(--bg-elev) 62%, transparent);
+  backdrop-filter: blur(6px);
+  font-size:12.5px;font-weight:600;
+  color:var(--fg-dim);
+  letter-spacing:.01em;
+}
+.badge .pill{
+  padding:2px 7px;border-radius:999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.03em;
+}
+.hero h1{
+  margin:0;
+  font-size: clamp(36px, 6vw, 66px);
+  line-height:1.05;
+  letter-spacing:-.035em;
+  font-weight:800;
+  max-width: 16ch;
+}
+.hero h1 .grad{
+  background: linear-gradient(110deg, var(--accent) 0%, var(--accent-2) 60%, #ff8fc7 100%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;
+}
+.hero-sub{
+  margin:0;
+  max-width: 56ch;
+  color: var(--fg-dim);
+  font-size: clamp(15px, 1.6vw, 17.5px);
+  line-height:1.7;
+}
+.hero-cta{
+  display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:12px;
+  font-size:14.5px;font-weight:600;
+  border:1px solid transparent;
+  cursor:pointer;
+  transition: transform .18s, background-color .18s, box-shadow .2s, border-color .18s;
+  white-space:nowrap;
+}
+.btn:active{ transform: translateY(1px) }
+.btn-primary{
+  color:#fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 22px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+.btn-primary:hover{ box-shadow: 0 12px 30px color-mix(in oklab, var(--accent) 45%, transparent) }
+.btn-ghost{
+  color: var(--fg);
+  background: color-mix(in oklab, var(--bg-elev) 65%, transparent);
+  border-color: var(--line-hi);
+  backdrop-filter: blur(6px);
+}
+.btn-ghost:hover{ background: var(--bg-elev); border-color: var(--fg-dim) }
+
+/* ---- Hero 示例卡片区 ---- */
+.hero-showcase{
+  position:relative;
+  z-index:3;
+  padding: 44px 28px 28px;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 14px;
+}
+.show-card{
+  position:relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  /* 必须显式给背景：<button> 默认露出 UA 的 ButtonFace（#EFEFEF），
+     半透明描边叠在它上面，暗色模式里就成了一条刺眼的白线。 */
+  background: transparent;
+  border: 1px solid var(--card-line);
+  overflow:hidden;
+  isolation:isolate;
+  box-shadow: var(--shadow-sm);
+  transition: transform .3s cubic-bezier(.2,.8,.3,1), box-shadow .3s, border-color .2s;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+.show-card:hover{
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--line);   /* 只有悬停才提亮，平时保持克制 */
+}
+.show-card:focus-visible{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+.show-inner{
+  position:relative;
+  z-index:3;
+  height:100%;
+  padding: 20px 22px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;
+  text-align:center;
+  pointer-events:none;
+}
+.show-num{
+  font-size: clamp(30px, 3.6vw, 42px);
+  font-weight:800;
+  letter-spacing:-.035em;
+  line-height:1;
+  font-variant-numeric: tabular-nums;
+}
+.show-label{
+  font-size:11.5px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  font-weight:700;
+  opacity:.55;
+}
+
+/* ==========================================================================
+   Section shell
+   ========================================================================== */
+.section{ padding: 88px 0; position:relative }
+.section-head{
+  margin-bottom: 44px;
+  max-width: 720px;
+}
+.section-eyebrow{
+  font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:700;
+  color: var(--accent);
+  margin-bottom:12px;
+}
+.section-title{
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight:800;letter-spacing:-.03em;
+  margin:0 0 14px;
+}
+.section-sub{
+  margin:0;
+  max-width: 62ch;
+  color: var(--fg-dim);
+  font-size: 15.5px;
+  line-height:1.7;
+}
+
+/* ==========================================================================
+   Docs (合并文档 + API)
+   ========================================================================== */
+.docs-layout{
+  display:grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 24px;
+  align-items:start;
+}
+
+.docs-code-panel{
+  background: var(--code-bg);
+  border-radius: var(--radius-md);
+  border:1px solid var(--line);
+  overflow:hidden;
+  position:sticky;
+  top: 88px;
+}
+.docs-tabs{
+  display:flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  background: rgba(255,255,255,.025);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.docs-tab{
+  padding: 9px 14px;
+  background:transparent;
+  color:#7f849c;
+  border:0;
+  border-radius: 8px 8px 0 0;
+  cursor:pointer;
+  font-size:12.5px;
+  font-weight:600;
+  transition: color .18s, background-color .18s;
+  font-family: var(--font-mono);
+}
+.docs-tab:hover{ color:#cdd6f4 }
+.docs-tab.on{
+  color:#cdd6f4;
+  background: rgba(255,255,255,.05);
+}
+.docs-pane{
+  padding: 22px 22px;
+  overflow-x:auto;
+}
+.docs-pane pre{
+  margin:0;
+  white-space:pre;
+  line-height:1.75;
+  color: var(--code-fg);
+}
+.docs-pane[hidden]{ display:none }
+.docs-pane .tok-key{color:#cba6f7}
+.docs-pane .tok-str{color:#a6e3a1}
+.docs-pane .tok-num{color:#fab387}
+.docs-pane .tok-com{color:#6c7086;font-style:italic}
+.docs-pane .tok-fn{color:#89b4fa}
+
+.docs-hint{
+  padding: 14px 22px;
+  background: rgba(255,255,255,.02);
+  border-top:1px solid rgba(255,255,255,.06);
+  font-size:12px;
+  color:#7f849c;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.docs-hint b{
+  font-family: var(--font-mono);
+  font-weight:600;
+  color:#a6e3a1;
+  background: rgba(166,227,161,.1);
+  padding:2px 7px;
+  border-radius:5px;
+}
+
+/* 选项列表 */
+.opts-panel{
+  border-radius: var(--radius-md);
+  border:1px solid var(--line);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-sm);
+  overflow:hidden;
+}
+.opts-head{
+  padding: 16px 20px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  background: var(--panel);
+}
+.opts-head h3{
+  margin:0;
+  font-size:14.5px;
+  font-weight:700;
+  letter-spacing:-.01em;
+}
+.opts-head span{
+  font-size:11.5px;
+  color: var(--fg-mute);
+  font-family: var(--font-mono);
+  letter-spacing:.02em;
+}
+.opt-row{
+  display:grid;
+  grid-template-columns: 104px 108px 1fr;
+  gap: 14px;
+  padding: 13px 20px;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+  align-items:baseline;
+  transition: background-color .15s;
+}
+.opt-row:hover{ background: var(--panel); }
+.opt-row:last-child{ border-bottom:0 }
+.opt-row .k{
+  font-family: var(--font-mono);
+  font-size:12.5px;
+  color: var(--accent);
+  font-weight:600;
+  letter-spacing:-.01em;
+}
+.opt-row .t{
+  font-family: var(--font-mono);
+  font-size:11.5px;
+  color: var(--fg-mute);
+  letter-spacing:-.01em;
+  word-break: break-word;
+}
+.opt-row .d{
+  color: var(--fg-dim);
+  line-height:1.55;
+  font-size:12.5px;
+}
+
+/* ==========================================================================
+   Drawer — Playground
+   ========================================================================== */
+.drawer-backdrop{
+  position:fixed;inset:0;
+  background: rgba(10,12,17,.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .35s cubic-bezier(.2,.8,.3,1);
+  z-index: 90;
+}
+.drawer-backdrop.open{
+  opacity:1;
+  pointer-events:auto;
+}
+.drawer{
+  position:fixed;
+  top:0;right:0;
+  height:100vh;
+  width: min(1180px, 94vw);
+  max-width: 94vw;
+  background: var(--bg-elev);
+  border-left:1px solid var(--line);
+  box-shadow: -30px 0 80px rgba(0,0,0,.18);
+  transform: translateX(100%);
+  transition: transform .42s cubic-bezier(.22,1,.36,1);
+  z-index: 91;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.drawer.open{ transform: translateX(0) }
+
+.drawer-main{
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+.drawer-preview{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding: 22px;
+  background: var(--bg-sub);
+  border-right:1px solid var(--line);
+}
+.preview-stage-wrap{
+  flex:1;
+  min-height:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.preview-stage{
+  flex:none;
+  border-radius: var(--radius-md);
+  overflow:hidden;
+  box-shadow: var(--shadow-md);
+  background: var(--bg-elev);
+}
+.preview-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.preview-sizes{ display:flex; align-items:center; gap:8px }
+.size-field{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--fg-mute);
+}
+.size-field input{
+  width:78px;
+  padding:7px 9px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size:12px;
+}
+.size-field input:focus{ outline:none; border-color:var(--accent) }
+.size-x{ color: var(--fg-mute); font-size:12px }
+.mini-btn{
+  padding:7px 11px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font-size:11.5px;font-weight:700;
+  cursor:pointer;
+  transition: background-color .18s, color .18s;
+}
+.mini-btn:hover{ background: var(--panel-hi); color: var(--fg) }
+.preview-actions{ display:flex;align-items:center;gap:10px;flex-wrap:wrap }
+#pg-download{ font-size:12.5px; padding:9px 14px }
+#pg-download-svg{ font-size:12.5px; padding:9px 14px }
+.preview-actions .out-size{
+  font-family: var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  opacity:.8;
+}
+.preview-hint{
+  margin:0;
+  font-size:12px;
+  line-height:1.6;
+  color: var(--fg-mute);
+}
+.drawer-rail{
+  width:400px;
+  flex:none;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.drawer-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 20px 22px 18px;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+.drawer-head .t{
+  display:flex;flex-direction:column;gap:3px;
+  min-width:0;
+}
+.drawer-head .t .eyebrow{
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:700;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.drawer-head .t h2{
+  margin:0;
+  font-size:17px;
+  font-weight:700;
+  letter-spacing:-.01em;
+}
+.drawer-close{
+  width:32px;height:32px;
+  display:grid;place-items:center;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg-dim);
+  cursor:pointer;
+  transition: background-color .18s, color .18s;
+  flex-shrink:0;
+}
+.drawer-close:hover{ background:var(--panel-hi); color:var(--fg) }
+.drawer-close svg{
+  width:14px;height:14px;
+  stroke:currentColor;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  fill:none;
+}
+
+.drawer-body{
+  flex:1;
+  overflow-y:auto;
+  padding: 22px;
+  display:flex;
+  flex-direction:column;
+  gap: 20px;
+}
+.drawer-body::-webkit-scrollbar{ width:6px }
+.drawer-body::-webkit-scrollbar-thumb{
+  background: var(--line-hi);
+  border-radius:3px;
+}
+
+.field{ display:flex;flex-direction:column;gap:8px }
+.field label{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:700;color:var(--fg-mute);
+}
+.field label .val{
+  font-family: var(--font-mono);
+  font-size:11.5px;
+  letter-spacing:0;
+  text-transform:none;
+  color: var(--accent);
+  font-weight:600;
+}
+.field input[type=text]{
+  width:100%;
+  padding:10px 13px;
+  font-family: var(--font-sans);
+  font-size:14.5px;
+  color: var(--fg);
+  background: var(--bg-sub);
+  border:1px solid var(--line);
+  border-radius: 10px;
+  outline:none;
+  transition: border-color .18s, box-shadow .18s, background-color .18s;
+}
+.field input[type=text]:focus{
+  border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3.5px color-mix(in oklab, var(--accent) 14%, transparent);
+  background: var(--bg-elev);
+}
+
+.segmented{
+  display:grid;grid-template-columns: repeat(3, 1fr);
+  gap:3px;
+  padding:3px;
+  border-radius: 11px;
+  background: var(--bg-sub);
+  border:1px solid var(--line);
+}
+.segmented button{
+  padding:8px 6px;border-radius:8px;border:0;
+  background:transparent;color:var(--fg-dim);
+  cursor:pointer;font-size:12.5px;font-weight:600;
+  transition: background-color .18s, color .18s;
+  font-family: var(--font-mono);
+}
+.segmented button:hover{ color:var(--fg) }
+.segmented button.on{
+  background: var(--bg-elev);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:22px;background:transparent;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:4px;border-radius:4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)) 0/var(--pct,50%) 100% no-repeat,
+              var(--panel-hi);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;height:16px;border-radius:50%;
+  margin-top:-6px;
+  background: var(--bg-elev);
+  border:2px solid var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 16%, transparent);
+  transition: transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover{ transform: scale(1.15) }
+input[type=range]::-moz-range-track{
+  height:4px;border-radius:4px;background: var(--panel-hi);
+}
+input[type=range]::-moz-range-progress{
+  height:4px;border-radius:4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+input[type=range]::-moz-range-thumb{
+  width:12px;height:12px;border:2px solid var(--accent);
+  border-radius:50%;background: var(--bg-elev);
+}
+
+.drawer-divider{
+  height:1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+
+.drawer-code{
+  background: var(--code-bg);
+  border-radius: 12px;
+  border:1px solid var(--line);
+  overflow:hidden;
+}
+.drawer-code .h{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 14px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  font-weight:700;
+  color:#7f849c;
+}
+.drawer-code .h button{
+  background: rgba(255,255,255,.06);
+  color:#cdd6f4;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;
+  padding:4px 9px;
+  font-size:11px;font-weight:600;
+  cursor:pointer;
+  letter-spacing:0;
+  text-transform:none;
+  transition: background-color .18s;
+}
+.drawer-code .h button:hover{ background: rgba(255,255,255,.12) }
+.drawer-code .h button.done{
+  background: rgba(166,227,161,.16);
+  color:#a6e3a1;
+  border-color: rgba(166,227,161,.3);
+}
+.drawer-code pre{
+  margin:0;
+  padding: 14px 16px;
+  white-space:pre;
+  overflow-x:auto;
+  line-height:1.7;
+  color: var(--code-fg);
+  font-size:12px;
+}
+.drawer-code .tok-key{color:#cba6f7}
+.drawer-code .tok-str{color:#a6e3a1}
+.drawer-code .tok-num{color:#fab387}
+.drawer-code .tok-com{color:#6c7086;font-style:italic}
+.drawer-code .tok-fn{color:#89b4fa}
+
+.drawer-foot{
+  padding: 14px 22px 20px;
+  border-top:1px solid var(--line);
+  display:flex;
+  gap:10px;
+  flex-shrink:0;
+}
+.drawer-foot .btn{ flex:1; justify-content:center }
+
+/* ==========================================================================
+   Agents — SKILL.md
+   ========================================================================== */
+.agent-prompt{
+  margin-top:34px;
+  border:1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-sm);
+  overflow:hidden;
+}
+.agent-prompt-h{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color: var(--fg-mute);
+}
+#agent-copy{
+  border:1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg-dim);
+  border-radius:8px;
+  padding:6px 12px;
+  font-family: var(--font-sans);
+  font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;
+  cursor:pointer;
+  transition: background-color .18s, color .18s, border-color .18s;
+}
+#agent-copy:hover{ background: var(--panel-hi); color: var(--fg) }
+#agent-copy.done{ color:#22c55e;border-color:color-mix(in oklab, #22c55e 45%, transparent) }
+.agent-prompt pre{
+  margin:0;padding:18px;
+  background: var(--code-bg);color: var(--code-fg);
+  overflow-x:auto;white-space:pre-wrap;
+  font-size:13px;line-height:1.75;
+}
+.agent-hint{
+  margin:0;
+  padding:14px 18px 16px;
+  border-top:1px solid var(--line);
+  font-size:13px;line-height:1.65;
+  color: var(--fg-dim);
+}
+.nav-links a.nav-gh path{ fill: currentColor }
+.nav-links a.nav-gh{
+  display:flex;align-items:center;gap:7px;
+}
+.nav-links a.nav-gh svg{ width:15px;height:15px }
+
+/* ---- 新版本提示 ---- */
+.update-toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform: translateX(-50%);
+  z-index: 95;
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px 10px 16px;
+  border:1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font-size:13px;
+  box-shadow: var(--shadow-md);
+}
+.update-toast[hidden]{ display:none }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+footer{
+  margin-top: 40px;
+  padding: 40px 0 60px;
+  border-top:1px solid var(--line);
+}
+.footer-inner{
+  display:flex;justify-content:space-between;align-items:center;
+  gap: 24px;flex-wrap:wrap;
+  font-size:13.5px;color: var(--fg-mute);
+}
+.footer-inner .brand{ color: var(--fg) }
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a:hover{ color: var(--fg) }
+
+/* ==========================================================================
+   Reveal
+   ========================================================================== */
+.reveal{
+  opacity:0; transform: translateY(14px);
+  transition: opacity .7s cubic-bezier(.2,.8,.3,1), transform .7s cubic-bezier(.2,.8,.3,1);
+}
+.reveal.in{ opacity:1; transform:none }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 980px){
+  .drawer-main{ flex-direction:column }
+  .drawer-preview{
+    flex:none;height:46vh;
+    border-right:0;border-bottom:1px solid var(--line);
+  }
+  .drawer-rail{ width:100%;flex:1 }
+  .docs-layout{ grid-template-columns: 1fr }
+  .docs-code-panel{ position: static }
+  .hero-showcase{ grid-template-columns: repeat(2, minmax(0,1fr)); padding: 32px 20px 20px }
+  .hero-content{ padding: 56px 32px 0 }
+  .section{ padding: 64px 0 }
+  .nav-links{ display:none }
+}
+@media (max-width: 560px){
+  .hero-content{ padding: 44px 22px 0 }
+  .hero-showcase{ grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; padding: 24px 14px 14px }
+  .opt-row{ grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 12px 16px }
+  .opt-row .d{ grid-column: 1 / -1 }
+  .drawer-preview{ height:38vh; padding:16px }
+  .preview-bar{ gap:10px }
+  .drawer{ width:100% }
+}
+@media (prefers-reduced-motion: reduce){
+  .reveal{ opacity:1; transform:none; transition:none }
+  html{ scroll-behavior:auto }
+  .drawer{ transition:none }
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     NAV
+     ========================================================================== -->
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top">
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="26" height="26" />
+      <span>Textural</span>
+    </a>
+    <div class="nav-links">
+      <a href="#docs" data-i18n="nav.docs">接入与配置</a>
+      <a href="#agents" data-i18n="nav.agents">Agent 接入</a>
+      <a class="nav-gh" href="https://github.com/aispin/textural" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span>GitHub</span>
+      </a>
+    </div>
+    <div class="nav-tools">
+      <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">
+        <span id="lang-current">中文</span>
+        <span class="dot"></span>
+        <span id="lang-other">EN</span>
+      </button>
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ==========================================================================
+     HERO
+     ========================================================================== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-card reveal">
+      <div class="hero-bg" id="hero-bg"></div>
+
+      <div class="hero-content">
+        <span class="badge">
+          <!-- 版本号由构建时注入（scripts/build.mjs --site 读 package.json 的 version） -->
+          <span class="pill" id="hero-version">v1.3.1</span>
+          <span data-i18n="hero.badge.text">零依赖 · 5.8KB gzip</span>
+        </span>
+        <h1>
+          <span data-i18n="hero.title.1">把文字</span>
+          <span class="grad" data-i18n="hero.title.2">变成卡片背景</span>
+        </h1>
+        <p class="hero-sub" data-i18n="hero.subtitle">
+          输入任意字或词，生成柔和、不抢镜的卡片底纹。Canvas + SVG + GLSL 三层渲染，支持高斯模糊、色彩流动、胶片颗粒。
+        </p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" id="btn-playground">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span data-i18n="hero.cta.playground">Playground</span>
+          </button>
+          <a class="btn btn-ghost" href="#docs" data-i18n="hero.cta.docs">接入与配置</a>
+        </div>
+      </div>
+
+      <!-- 4 张示例卡片（点击打开设置面板并回填参数） -->
+      <div class="hero-showcase">
+        <button class="show-card" data-demo="size"    type="button" aria-label="Edit card"></button>
+        <button class="show-card" data-demo="dep"     type="button" aria-label="Edit card"></button>
+        <button class="show-card" data-demo="backend" type="button" aria-label="Edit card"></button>
+        <button class="show-card" data-demo="license" type="button" aria-label="Edit card"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     DOCS + API (合并)
+     ========================================================================== -->
+<section class="section" id="docs" style="padding-top: 40px">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow" data-i18n="docs.eyebrow">Getting Started &amp; API</div>
+      <h2 class="section-title" data-i18n="docs.title">接入与配置</h2>
+      <p class="section-sub" data-i18n="docs.subtitle">
+        三步接入，一份配置表。所有参数都能在构造时传入，也能后续通过 update() 修改——点击上方任意卡片即可实时预览。
+      </p>
+    </div>
+
+    <div class="docs-layout">
+      <!-- 左：代码示例 -->
+      <div class="docs-code-panel reveal">
+        <div class="docs-tabs" role="tablist">
+          <button class="docs-tab on" data-tab="install" data-i18n="docs.tab.install">install</button>
+          <button class="docs-tab" data-tab="usage" data-i18n="docs.tab.usage">usage</button>
+          <button class="docs-tab" data-tab="update" data-i18n="docs.tab.update">update</button>
+          <button class="docs-tab" data-tab="cleanup" data-i18n="docs.tab.cleanup">cleanup</button>
+        </div>
+
+        <div class="docs-pane" data-pane="install">
+<pre><code class="js"># npm
+npm install @aifire/textural
+
+# 或者用 CDN（单文件，无依赖）
+&lt;script src="https://unpkg.com/@aifire/textural/dist/textural.iife.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  new Textural('#card', { text: '灵感' });
+&lt;/script&gt;</code></pre>
+        </div>
+
+        <div class="docs-pane" data-pane="usage" hidden>
+<pre><code class="js">import { Textural } from '@aifire/textural';
+
+// 传入容器选择器和配置
+const bg = new Textural('#card', {
+  text:      '灵感',
+  mode:      'tile',    // tile | flow | hero
+  blur:      0.3,       // 0 – 1
+  hue:       220,
+  intensity: 0.6,
+  grain:     0.6,
+});</code></pre>
+        </div>
+
+        <div class="docs-pane" data-pane="update" hidden>
+<pre><code class="js">// 运行时修改任意配置，会立即重绘
+bg.update({
+  text: '专注',
+  hue:  280,
+  blur: 0.6,
+});
+
+// 或者换一个词，其余样式全随机
+bg.randomize({ text: '回声' });
+
+// 只锁定想要的参数，剩下的随机
+bg.randomize({ mode: 'hero', hue: 220 });</code></pre>
+        </div>
+
+        <div class="docs-pane" data-pane="cleanup" hidden>
+<pre><code class="js">// 组件卸载时释放 WebGL context
+onUnmount(() => {
+  bg.destroy();
+});
+
+// 导出当前背景为 PNG
+const png = bg.toDataURL();</code></pre>
+        </div>
+
+        <div class="docs-hint">
+          <span>💡</span>
+          <span data-i18n="docs.hint">所有配置项都支持热更新，</span>
+          <b>update()</b>
+          <span data-i18n="docs.hint2">会保留 WebGL context 与离屏画布，只重绘变化的部分。</span>
+        </div>
+      </div>
+
+      <!-- 右：API 表 -->
+      <div class="opts-panel reveal">
+        <div class="opts-head">
+          <h3 data-i18n="opts.title">配置项</h3>
+          <span data-i18n="opts.count">10 options</span>
+        </div>
+        <div class="opt-row"><span class="k">text</span><span class="t">string</span><span class="d" data-i18n="opt.text">要渲染的文字，最多 12 个字符</span></div>
+        <div class="opt-row"><span class="k">mode</span><span class="t">enum</span><span class="d" data-i18n="opt.mode">排布模式：tile 无缝网格 / flow 波浪流动 / hero 超大水印</span></div>
+        <div class="opt-row"><span class="k">theme</span><span class="t">enum</span><span class="d" data-i18n="opt.theme">light / dark / auto，auto 会跟随容器背景亮度</span></div>
+        <div class="opt-row"><span class="k">blur</span><span class="t">0 – 1</span><span class="d" data-i18n="opt.blur">文字高斯模糊强度，越大越隐约</span></div>
+        <div class="opt-row"><span class="k">hue</span><span class="t">0 – 360</span><span class="d" data-i18n="opt.hue">色相；留空则由文字哈希自动推导</span></div>
+        <div class="opt-row"><span class="k">intensity</span><span class="t">0 – 1</span><span class="d" data-i18n="opt.intensity">文字纹理不透明度</span></div>
+        <div class="opt-row"><span class="k">scale</span><span class="t">number</span><span class="d" data-i18n="opt.scale">字号倍率，相对于容器短边</span></div>
+        <div class="opt-row"><span class="k">grain</span><span class="t">0 – 1</span><span class="d" data-i18n="opt.grain">胶片颗粒强度，用于消除渐变色带</span></div>
+        <div class="opt-row"><span class="k">animate</span><span class="t">boolean</span><span class="d" data-i18n="opt.animate">是否启用 GLSL 流动动画</span></div>
+        <div class="opt-row"><span class="k">seed</span><span class="t">number</span><span class="d" data-i18n="opt.seed">随机种子；相同种子产生相同底纹</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     AGENTS — SKILL.md 怎么接进 Agent
+     ========================================================================== -->
+<section class="section" id="agents">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow" data-i18n="agent.eyebrow">For coding agents</div>
+      <h2 class="section-title" data-i18n="agent.title">让 Agent 自己会用 Textural</h2>
+      <p class="section-sub" data-i18n="agent.subtitle">
+        仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、以及改完代码要跑的自检命令。
+        把它放进助手读取的位置，之后你在聊天窗口里说一句需求就够了。
+      </p>
+    </div>
+
+    <div class="agent-prompt reveal">
+      <div class="agent-prompt-h">
+        <span data-i18n="agent.prompt.title">一句话让 Agent 自己装</span>
+        <button id="agent-copy" data-i18n="agent.copy">复制</button>
+      </div>
+      <pre><code id="agent-prompt-code" data-i18n="agent.prompt.code">请帮我安装 https://github.com/aispin/textural/blob/main/SKILL.md，并且告诉我怎么用。</code></pre>
+      <p class="agent-hint" data-i18n="agent.hint">把这句话直接发给你的编码助手（Claude Code / Codex / Cursor 都行）：它会读那份 SKILL.md，装进自己的技能目录，然后照里面的约定用 Textural。</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ==========================================================================
+     FOOTER
+     ========================================================================== -->
+<footer>
+  <div class="container footer-inner">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="26" height="26" />
+      <span class="brand">Textural</span>
+    </div>
+    <div data-i18n="footer.tagline">让每一个卡片都有质感</div>
+    <div class="footer-links">
+      <a href="#docs" data-i18n="footer.docs">文档</a>
+      <a href="https://github.com/aispin/textural" target="_blank" rel="noopener" data-i18n="footer.repo">GitHub</a>
+      <a href="https://github.com/aispin/textural/blob/main/SKILL.md" target="_blank" rel="noopener" data-i18n="footer.skill">SKILL.md</a>
+      <span data-i18n="footer.license">MIT · 自由商用</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ==========================================================================
+     DRAWER — Playground
+     ========================================================================== -->
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+<aside class="drawer" id="playground-drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="t">
+      <span class="eyebrow" id="drawer-target-label">HERO</span>
+      <h2 data-i18n="drawer.title">实时调教</h2>
+    </div>
+    <button class="drawer-close" id="drawer-close" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="drawer-main">
+    <!-- 左：源背景的实时副本 + 导出（改参数同步源背景，改宽高只动这里） -->
+    <div class="drawer-preview">
+      <div class="preview-stage-wrap">
+        <div class="preview-stage" id="pg-stage"></div>
+      </div>
+      <div class="preview-bar">
+        <div class="preview-sizes">
+          <label class="size-field">
+            <span data-i18n="drawer.width">宽</span>
+            <input id="pg-w" type="number" min="64" max="4096" step="1" inputmode="numeric" value="1180" />
+          </label>
+          <span class="size-x" aria-hidden="true">×</span>
+          <label class="size-field">
+            <span data-i18n="drawer.height">高</span>
+            <input id="pg-h" type="number" min="64" max="4096" step="1" inputmode="numeric" value="520" />
+          </label>
+          <button class="mini-btn" id="pg-size-src" data-i18n="drawer.sourceSize">源尺寸</button>
+        </div>
+        <div class="preview-actions">
+          <button class="btn btn-primary" id="pg-download">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 12l5 5 5-5M4 20h16"/></svg>
+            <span data-i18n="drawer.download">下载 PNG</span>
+          </button>
+          <button class="btn btn-ghost" id="pg-download-svg">
+            <span data-i18n="drawer.downloadSvg">下载 SVG</span>
+          </button>
+          <span class="out-size" id="pg-out-size">1180 × 520</span>
+        </div>
+      </div>
+      <p class="preview-hint" data-i18n="drawer.previewHint">
+        左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览和导出的 PNG。
+      </p>
+    </div>
+
+    <div class="drawer-rail">
+  <div class="drawer-body">
+    <div class="field">
+      <label for="pg-text"><span data-i18n="drawer.input">文字 / 词语</span></label>
+      <input id="pg-text" type="text" value="灵感" maxlength="12"
+             placeholder="输入字或词" data-i18n-ph="drawer.input.ph" />
+    </div>
+
+    <div class="field">
+      <label><span data-i18n="drawer.mode">排布模式</span></label>
+      <div class="segmented" id="pg-mode">
+        <button data-val="tile" data-i18n="drawer.mode.tile">tile</button>
+        <button data-val="flow" class="on" data-i18n="drawer.mode.flow">flow</button>
+        <button data-val="hero" data-i18n="drawer.mode.hero">hero</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="pg-blur">
+        <span data-i18n="drawer.blur">文字模糊</span>
+        <span class="val" id="v-blur">0.78</span>
+      </label>
+      <input id="pg-blur" type="range" min="0" max="1" step="0.01" value="0.78" />
+    </div>
+
+    <div class="field">
+      <label for="pg-hue">
+        <span data-i18n="drawer.hue">色相</span>
+        <span class="val" id="v-hue">235</span>
+      </label>
+      <input id="pg-hue" type="range" min="0" max="360" step="1" value="235" />
+    </div>
+
+    <div class="field">
+      <label for="pg-intensity">
+        <span data-i18n="drawer.intensity">文字强度</span>
+        <span class="val" id="v-intensity">0.75</span>
+      </label>
+      <input id="pg-intensity" type="range" min="0" max="1" step="0.01" value="0.75" />
+    </div>
+
+    <div class="field">
+      <label for="pg-scale">
+        <span data-i18n="drawer.scale">字号</span>
+        <span class="val" id="v-scale">1.35</span>
+      </label>
+      <input id="pg-scale" type="range" min="0.5" max="2" step="0.01" value="1.35" />
+    </div>
+
+    <div class="field">
+      <label for="pg-grain">
+        <span data-i18n="drawer.grain">颗粒</span>
+        <span class="val" id="v-grain">0.50</span>
+      </label>
+      <input id="pg-grain" type="range" min="0" max="1" step="0.01" value="0.5" />
+    </div>
+
+    <div class="drawer-divider"></div>
+
+    <div class="drawer-code">
+      <div class="h">
+        <span>JavaScript</span>
+        <button id="pg-copy" data-i18n="drawer.copy">复制</button>
+      </div>
+      <pre><code id="pg-code"></code></pre>
+    </div>
+  </div>
+
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" id="pg-random" style="flex:1;justify-content:center">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+      <span data-i18n="drawer.random">随机</span>
+    </button>
+    <button class="btn btn-primary" id="pg-reset" style="flex:1;justify-content:center">
+      <span data-i18n="drawer.reset">重置</span>
+    </button>
+  </div>
+    </div>
+  </div>
+</aside>
+
+<!-- 新版本提示：Service Worker 装了新版就先亮出来，用户点了才刷新（不静默打断） -->
+<div class="update-toast" id="update-toast" hidden role="status" aria-live="polite">
+  <span data-i18n="update.text">有新版本可用</span>
+  <button class="mini-btn" id="update-refresh" data-i18n="update.action">刷新</button>
+</div>
+
+<!-- 库本体：构建产物（npm run build 生成），页面逻辑见文件末尾 -->
+<script src="./textural.js"></script>
+<script>
+/* ==========================================================================
+   落地页逻辑
+   ========================================================================== */
+(function(){
+'use strict';
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* -------------------- i18n -------------------- */
+const I18N = {
+  zh: {
+    'nav.docs': '接入与配置',
+    'nav.agents': 'Agent 接入',
+
+    'hero.badge.text': '零依赖 · 5.8KB gzip',
+    'hero.title.1': '把文字',
+    'hero.title.2': '变成卡片背景',
+    'hero.subtitle': '输入任意字或词，生成柔和、不抢镜的卡片底纹。Canvas + SVG + GLSL 三层渲染，支持高斯模糊、色彩流动、胶片颗粒。',
+    'hero.cta.playground': 'Playground',
+    'hero.cta.docs': '接入与配置',
+
+    'show.size.num': '5.8KB',
+    'show.size.label': 'gzip 体积',
+    'show.dep.num': '0',
+    'show.dep.label': '运行时依赖',
+    'show.backend.num': '3',
+    'show.backend.label': '渲染后端',
+    'show.license.num': 'MIT',
+    'show.license.label': '开源协议',
+
+    'docs.eyebrow': 'Getting Started & API',
+    'docs.title': '接入与配置',
+    'docs.subtitle': '三步接入，一份配置表。所有参数都能在构造时传入，也能后续通过 update() 修改——点击上方任意卡片即可实时预览。',
+    'docs.tab.install': 'install',
+    'docs.tab.usage': 'usage',
+    'docs.tab.update': 'update',
+    'docs.tab.cleanup': 'cleanup',
+    'docs.hint': '所有配置项都支持热更新，',
+    'docs.hint2': '会保留 WebGL context 与离屏画布，只重绘变化的部分。',
+    'opts.title': '配置项',
+    'opts.count': '10 options',
+    'opt.text': '要渲染的文字，最多 12 个字符',
+    'opt.mode': '排布模式：tile 无缝网格 / flow 波浪流动 / hero 超大水印',
+    'opt.theme': 'light / dark / auto，auto 会跟随容器背景亮度',
+    'opt.blur': '文字高斯模糊强度，越大越隐约',
+    'opt.hue': '色相；留空则由文字哈希自动推导',
+    'opt.intensity': '文字纹理不透明度',
+    'opt.scale': '字号倍率，相对于容器短边',
+    'opt.grain': '胶片颗粒强度，用于消除渐变色带',
+    'opt.animate': '是否启用 GLSL 流动动画',
+    'opt.seed': '随机种子；相同种子产生相同底纹',
+
+    'agent.eyebrow': 'For coding agents',
+    'agent.title': '让 Agent 自己会用 Textural',
+    'agent.subtitle': '仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、改完代码要跑的自检命令。不用手动安装——把下面这句话发给你的 Agent 就行。',
+    'agent.prompt.title': '一句话让 Agent 自己装',
+    'agent.prompt.code': '请帮我安装 https://github.com/aispin/textural/blob/main/SKILL.md，并且告诉我怎么用。',
+    'agent.copy': '复制',
+    'agent.copied': '已复制',
+
+    'agent.hint': '把这句话直接发给你的编码助手（Claude Code / Codex / Cursor 都行）：它会读那份 SKILL.md，装进自己的技能目录，然后照里面的约定用 Textural。',
+
+    'footer.tagline': '让每一个卡片都有质感',
+    'footer.docs': '文档',
+    'footer.repo': 'GitHub',
+    'footer.skill': 'SKILL.md',
+    'footer.license': 'MIT · 自由商用',
+
+    'drawer.title': '实时调教',
+    'drawer.target.hero': 'HERO 背景',
+    'drawer.target.card': '卡片',
+    'drawer.input': '文字 / 词语',
+    'drawer.input.ph': '输入字或词',
+    'drawer.mode': '排布模式',
+    'drawer.mode.tile': 'tile',
+    'drawer.mode.flow': 'flow',
+    'drawer.mode.hero': 'hero',
+    'drawer.blur': '文字模糊',
+    'drawer.hue': '色相',
+    'drawer.intensity': '文字强度',
+    'drawer.scale': '字号',
+    'drawer.grain': '颗粒',
+    'drawer.copy': '复制',
+    'drawer.copied': '已复制',
+    'drawer.random': '随机',
+    'drawer.reset': '重置',
+    'drawer.width': '宽',
+    'drawer.height': '高',
+    'drawer.sourceSize': '源尺寸',
+    'drawer.download': '下载 PNG',
+    'drawer.downloadSvg': '下载 SVG',
+    'drawer.previewHint': '左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览与导出的文件。SVG 是矢量版（文字可编辑），不含 WebGL 的颗粒噪声。',
+    'drawer.code.hero': '// Hero background',
+    'drawer.code.card': '// Card',
+
+    'update.text': '有新版本可用',
+    'update.action': '刷新',
+
+    'lang.current': '中文',
+    'lang.other': 'EN'
+  },
+  en: {
+    'nav.docs': 'Docs & API',
+    'nav.agents': 'For agents',
+
+    'hero.badge.text': 'Zero deps · 5.8KB gzipped',
+    'hero.title.1': 'Turn text into',
+    'hero.title.2': 'card backgrounds',
+    'hero.subtitle': 'Type any word and get a soft, unobtrusive card texture. Rendered by Canvas + SVG + GLSL with gaussian blur, color flow, and film grain.',
+    'hero.cta.playground': 'Playground',
+    'hero.cta.docs': 'Docs & API',
+
+    'show.size.num': '5.8KB',
+    'show.size.label': 'gzipped',
+    'show.dep.num': '0',
+    'show.dep.label': 'runtime deps',
+    'show.backend.num': '3',
+    'show.backend.label': 'render backends',
+    'show.license.num': 'MIT',
+    'show.license.label': 'license',
+
+    'docs.eyebrow': 'Getting Started & API',
+    'docs.title': 'Docs & Configuration',
+    'docs.subtitle': 'Three steps to ship, one table of options. Every param can be set at construction time or updated later via update() — click any card above to try it live.',
+    'docs.tab.install': 'install',
+    'docs.tab.usage': 'usage',
+    'docs.tab.update': 'update',
+    'docs.tab.cleanup': 'cleanup',
+    'docs.hint': 'Every option can be hot-swapped. ',
+    'docs.hint2': 'keeps the WebGL context and offscreen canvases alive — only redraws what changed.',
+    'opts.title': 'Options',
+    'opts.count': '10 options',
+    'opt.text': 'Text to render, up to 12 characters',
+    'opt.mode': 'Layout: tile (seamless grid) / flow (waves) / hero (giant watermark)',
+    'opt.theme': 'light / dark / auto — "auto" follows the container background',
+    'opt.blur': 'Gaussian blur radius. Higher = more subtle',
+    'opt.hue': 'Hue. Leave empty to derive from the text',
+    'opt.intensity': 'Opacity of the text texture',
+    'opt.scale': 'Font scale relative to the shorter side',
+    'opt.grain': 'Film grain strength, used to break up gradient banding',
+    'opt.animate': 'Enable GLSL flow animation',
+    'opt.seed': 'Random seed. Same seed → same texture',
+
+    'agent.eyebrow': 'For coding agents',
+    'agent.title': 'Let your agent drive Textural',
+    'agent.subtitle': 'SKILL.md at the repo root is the contract for coding agents: when to reach for this library, the minimal call, every option, six pitfalls that really bite, and the checks to run after an edit. No manual install — just hand your agent the line below.',
+    'agent.prompt.title': 'One line, and your agent installs it',
+    'agent.prompt.code': 'Please install https://github.com/aispin/textural/blob/main/SKILL.md for me, and then tell me how to use it.',
+    'agent.copy': 'Copy',
+    'agent.copied': 'Copied',
+
+    'agent.hint': 'Paste that line into your coding agent (Claude Code, Codex, Cursor — any of them): it reads that SKILL.md, installs it into its own skills directory, and then follows the conventions inside.',
+
+    'footer.tagline': 'Give every card a soul',
+    'footer.docs': 'Docs',
+    'footer.repo': 'GitHub',
+    'footer.skill': 'SKILL.md',
+    'footer.license': 'MIT · free for commercial use',
+
+    'drawer.title': 'Live tuning',
+    'drawer.target.hero': 'HERO BACKGROUND',
+    'drawer.target.card': 'CARD',
+    'drawer.input': 'Text',
+    'drawer.input.ph': 'Type a word',
+    'drawer.mode': 'Layout mode',
+    'drawer.mode.tile': 'tile',
+    'drawer.mode.flow': 'flow',
+    'drawer.mode.hero': 'hero',
+    'drawer.blur': 'Text blur',
+    'drawer.hue': 'Hue',
+    'drawer.intensity': 'Text intensity',
+    'drawer.scale': 'Scale',
+    'drawer.grain': 'Grain',
+    'drawer.copy': 'Copy',
+    'drawer.copied': 'Copied',
+    'drawer.random': 'Random',
+    'drawer.reset': 'Reset',
+    'drawer.width': 'W',
+    'drawer.height': 'H',
+    'drawer.sourceSize': 'Source size',
+    'drawer.download': 'Download PNG',
+    'drawer.downloadSvg': 'Download SVG',
+    'drawer.previewHint': 'This left pane is a live copy of the source background: parameter changes sync to the source, width/height only affect the preview and the exported files. The SVG is vector (editable text) and has no WebGL grain.',
+    'drawer.code.hero': '// Hero background',
+    'drawer.code.card': '// Card',
+
+    'update.text': 'A new version is available',
+    'update.action': 'Refresh',
+
+    'lang.current': 'EN',
+    'lang.other': '中文'
+  }
+};
+
+const STORAGE = { lang:'textural.lang', theme:'textural.theme' };
+
+let lang = (() => {
+  try {
+    const saved = localStorage.getItem(STORAGE.lang);
+    if(saved === 'zh' || saved === 'en') return saved;
+  } catch(_){}
+  return (navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+})();
+
+function t(key){ return (I18N[lang] && I18N[lang][key]) || key; }
+
+/* -------------------- 主题 -------------------- */
+let theme = (() => {
+  try {
+    const saved = localStorage.getItem(STORAGE.theme);
+    if(saved === 'light' || saved === 'dark') return saved;
+  } catch(_){}
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+})();
+
+function applyTheme(){
+  document.documentElement.dataset.theme = theme;
+  $('#icon-sun').style.display  = theme === 'light' ? '' : 'none';
+  $('#icon-moon').style.display = theme === 'dark'  ? '' : 'none';
+  try{ localStorage.setItem(STORAGE.theme, theme); }catch(_){}
+}
+
+/* -------------------- i18n 应用 -------------------- */
+function applyI18n(){
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $('#lang-current').textContent = t('lang.current');
+  $('#lang-other').textContent = t('lang.other');
+}
+
+/* -------------------- WordBG / Textural 实例池 -------------------- */
+const bgs = [];
+function track(bg){ bgs.push(bg); return bg; }
+
+/* -------------------- Hero 背景配置 -------------------- */
+const heroOrigin = {
+  text: '灵感',
+  mode: 'flow',
+  blur: 0.78,
+  hue: 235,
+  intensity: 0.75,
+  scale: 1.35,
+  grain: 0.5
+};
+const heroConfig = { ...heroOrigin };
+let heroBg = null;
+
+/* -------------------- 4 张示例卡片 -------------------- */
+const DEMO_CONFIGS = {
+  size: {
+    num: { zh: '5.8KB', en: '5.8KB' },
+    label: { zh: 'gzip 体积', en: 'gzipped' },
+    bg: { text:'轻', mode:'tile', hue:222, blur:0.35, intensity:0.55, scale:1.05, grain:0.55 }
+  },
+  dep: {
+    num: { zh: '0', en: '0' },
+    label: { zh: '运行时依赖', en: 'runtime deps' },
+    bg: { text:'零', mode:'flow', hue:280, blur:0.55, intensity:0.65, scale:1.0, grain:0.6 }
+  },
+  backend: {
+    num: { zh: '3', en: '3' },
+    label: { zh: '渲染后端', en: 'render backends' },
+    bg: { text:'三', mode:'hero', hue:160, blur:0.42, intensity:0.7, scale:1.25, grain:0.5 }
+  },
+  license: {
+    num: { zh: 'MIT', en: 'MIT' },
+    label: { zh: '开源协议', en: 'license' },
+    bg: { text:'MIT', mode:'tile', hue:22, blur:0.4, intensity:0.6, scale:1.0, grain:0.55 }
+  }
+};
+
+// 保存原始配置用于"重置"
+const CARD_ORIGINS = {};
+Object.keys(DEMO_CONFIGS).forEach(k => {
+  CARD_ORIGINS[k] = { ...DEMO_CONFIGS[k].bg };
+});
+
+const demoBgs = {};
+
+function buildShowcase(){
+  Object.keys(DEMO_CONFIGS).forEach(key => {
+    const cfg = DEMO_CONFIGS[key];
+    const el = document.querySelector(`.show-card[data-demo="${key}"]`);
+    if(!el) return;
+
+    el.innerHTML = `
+      <div class="show-inner">
+        <div class="show-num">${cfg.num[lang]}</div>
+        <div class="show-label">${cfg.label[lang]}</div>
+      </div>
+    `;
+
+    const bg = track(new Textural(el, {
+      ...cfg.bg,
+      theme: theme === 'dark' ? 'dark' : 'light',
+      animate: true
+    }));
+    demoBgs[key] = bg;
+
+    el.style.color = theme === 'dark' ? '#e9edf5' : '#1b2130';
+
+    // 点击 → 打开抽屉，回填参数
+    el.addEventListener('click', () => openDrawer(key));
+  });
+}
+
+function refreshShowcaseText(){
+  Object.keys(DEMO_CONFIGS).forEach(key => {
+    const cfg = DEMO_CONFIGS[key];
+    const el = document.querySelector(`.show-card[data-demo="${key}"]`);
+    if(!el) return;
+    const num   = el.querySelector('.show-num');
+    const label = el.querySelector('.show-label');
+    if(num)   num.textContent   = cfg.num[lang];
+    if(label) label.textContent = cfg.label[lang];
+  });
+}
+
+function refreshShowcaseTheme(){
+  Object.keys(demoBgs).forEach(key => {
+    const bg = demoBgs[key];
+    const el = bg.el;
+    bg.update({ theme: theme === 'dark' ? 'dark' : 'light' });
+    el.style.color = theme === 'dark' ? '#e9edf5' : '#1b2130';
+  });
+}
+
+/* -------------------- Drawer -------------------- */
+const drawer       = $('#playground-drawer');
+const backdrop     = $('#drawer-backdrop');
+const targetLabel  = $('#drawer-target-label');
+
+let drawerTarget = 'hero';       // 'hero' | 'size' | 'dep' | 'backend' | 'license'
+const drawerState = { ...heroConfig };
+
+function getTargetConfig(){
+  return drawerTarget === 'hero' ? heroConfig : DEMO_CONFIGS[drawerTarget].bg;
+}
+function getTargetOrigin(){
+  return drawerTarget === 'hero' ? heroOrigin : CARD_ORIGINS[drawerTarget];
+}
+function getTargetBg(){
+  return drawerTarget === 'hero' ? heroBg : demoBgs[drawerTarget];
+}
+
+function updateTargetLabel(){
+  if(drawerTarget === 'hero'){
+    targetLabel.textContent = t('drawer.target.hero');
+  } else {
+    targetLabel.textContent = t('drawer.target.card') + ' · ' + DEMO_CONFIGS[drawerTarget].num[lang];
+  }
+}
+
+function openDrawer(target){
+  drawerTarget = target;
+
+  // 从当前目标读取配置
+  const src = getTargetConfig();
+  Object.assign(drawerState, src);
+
+  // 回填 UI
+  fillDrawerUI();
+  updateTargetLabel();
+  updateDrawerCode();
+
+  // 左边那份副本：宽高默认取源元素尺寸（之后改宽高不动源背景）
+  resetSizeToSource();
+  mountPreview();
+
+  // 显示
+  drawer.classList.add('open');
+  backdrop.classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer(){
+  destroyPreview();
+  drawer.classList.remove('open');
+  backdrop.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function fillDrawerUI(){
+  $('#pg-text').value = drawerState.text;
+
+  $$('#pg-mode button').forEach(b => {
+    b.classList.toggle('on', b.dataset.val === drawerState.mode);
+  });
+
+  setRange('pg-blur',      'v-blur',      drawerState.blur,      v => v.toFixed(2));
+  setRange('pg-hue',       'v-hue',       drawerState.hue,       v => String(Math.round(v)));
+  setRange('pg-intensity', 'v-intensity', drawerState.intensity, v => v.toFixed(2));
+  setRange('pg-scale',     'v-scale',     drawerState.scale,     v => v.toFixed(2));
+  setRange('pg-grain',     'v-grain',     drawerState.grain,     v => v.toFixed(2));
+}
+
+function applyPatch(patch){
+  Object.assign(drawerState, patch);
+
+  // 同步到目标配置
+  Object.assign(getTargetConfig(), patch);
+
+  // 立即更新目标背景（源背景）与左边那份副本
+  getTargetBg().update(patch);
+  if(previewBg) previewBg.update(patch);
+
+  updateDrawerCode();
+}
+
+function setRange(id, valId, value, fmt){
+  const input = document.getElementById(id);
+  input.value = value;
+  const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
+  input.style.setProperty('--pct', pct + '%');
+  document.getElementById(valId).textContent = fmt ? fmt(parseFloat(value)) : value;
+}
+
+/* -------------------- 抽屉预览：源背景的副本 + 导出 PNG -------------------- */
+const previewStage = $('#pg-stage');
+const SIZE_MIN = 64;
+const SIZE_MAX = 4096;
+const exportSize = { w: 1180, h: 520 };
+let previewBg = null;
+
+function sourceSize(){
+  const bg = getTargetBg();
+  if(!bg) return { w: 1180, h: 520 };
+  const r = bg.el.getBoundingClientRect();
+  return { w: Math.max(1, Math.round(r.width)), h: Math.max(1, Math.round(r.height)) };
+}
+
+// 舞台尺寸 = 按导出比例等比缩放到可用区域（居中由 CSS 负责），不改变源背景
+function layoutPreview(){
+  const wrap = previewStage.parentElement;
+  const availW = wrap.clientWidth, availH = wrap.clientHeight;
+  if(!availW || !availH) return;
+  const k = Math.min(availW / exportSize.w, availH / exportSize.h);
+  previewStage.style.width  = Math.max(1, Math.round(exportSize.w * k)) + 'px';
+  previewStage.style.height = Math.max(1, Math.round(exportSize.h * k)) + 'px';
+  $('#pg-out-size').textContent = exportSize.w + ' × ' + exportSize.h;
+}
+
+function mountPreview(){
+  destroyPreview();
+  layoutPreview();
+  const src = getTargetBg();
+  if(!src) return;
+  // 复制源背景的完整配置（seed / 主题 / 动效都在里面）；
+  // dprMax 固定 1 → 画布像素 = CSS 像素，预览就是导出 PNG 的等比缩放。
+  previewBg = new Textural(previewStage, { ...src.opts, dprMax: 1 });
+  // 抽屉滑入动画结束后再量一次，避免首次量到未完成布局的尺寸
+  requestAnimationFrame(() => { if(previewBg) layoutPreview(); });
+}
+
+function destroyPreview(){
+  if(previewBg){ previewBg.destroy(); previewBg = null; }
+}
+
+const clampSize = v => Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(Number(v) || SIZE_MIN)));
+
+// 只改预览与导出尺寸：源背景一个像素都不动
+function applySizeInputs(normalize){
+  exportSize.w = clampSize($('#pg-w').value);
+  exportSize.h = clampSize($('#pg-h').value);
+  if(normalize){
+    $('#pg-w').value = exportSize.w;
+    $('#pg-h').value = exportSize.h;
+  }
+  layoutPreview();
+}
+
+function resetSizeToSource(){
+  const s = sourceSize();
+  $('#pg-w').value = s.w;
+  $('#pg-h').value = s.h;
+  applySizeInputs(true);
+}
+
+function exportFileName(ext){
+  return `textural-${String(drawerState.text || 'bg').trim()}-${exportSize.w}x${exportSize.h}.${ext}`;
+}
+
+function triggerDownload(href, filename){
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function downloadPNG(){
+  const { w, h } = exportSize;
+  const holder = document.createElement('div');
+  holder.style.cssText =
+    `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px;pointer-events:none`;
+  document.body.appendChild(holder);
+  let offscreen = null;
+  try{
+    // dprMax:1 → 画布 = W×H 像素，导出的 PNG 就是 W×H 原图
+    offscreen = new Textural(holder, { ...getTargetBg().opts, dprMax: 1, animate: false });
+    triggerDownload(offscreen.toDataURL(), exportFileName('png'));
+  } finally {
+    if(offscreen) offscreen.destroy();
+    holder.remove();
+  }
+}
+
+// SVG 直接按目标尺寸生成，不需要离屏实例
+function downloadSVG(){
+  const src = getTargetBg();
+  // 兜底：浏览器里跑的是旧版 textural.js（例如被旧 SW 缓存着）时别抛异常，
+  // 直接把「有新版本可用」的提示亮出来，用户点一下刷新就能用上 toSVG。
+  if(typeof src.toSVG !== 'function'){
+    const toast = $('#update-toast');
+    if(toast) toast.hidden = false;
+    return;
+  }
+  const svg = src.toSVG(exportSize.w, exportSize.h);
+  triggerDownload('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), exportFileName('svg'));
+}
+
+function bindPreviewControls(){
+  const wInput = $('#pg-w'), hInput = $('#pg-h');
+  let timer = null;
+  const debounced = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => applySizeInputs(false), 150);
+  };
+  wInput.addEventListener('input', debounced);
+  hInput.addEventListener('input', debounced);
+  wInput.addEventListener('change', () => applySizeInputs(true));
+  hInput.addEventListener('change', () => applySizeInputs(true));
+  $('#pg-size-src').addEventListener('click', resetSizeToSource);
+  $('#pg-download').addEventListener('click', downloadPNG);
+  $('#pg-download-svg').addEventListener('click', downloadSVG);
+  window.addEventListener('resize', () => { if(previewBg) layoutPreview(); });
+}
+
+/* -------------------- 抽屉控件 -------------------- */
+function bindRange(id, valId, key, fmt){
+  const input = document.getElementById(id);
+  const out = document.getElementById(valId);
+
+  const paint = () => {
+    const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
+    input.style.setProperty('--pct', pct + '%');
+  };
+  paint();
+
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    out.textContent = fmt ? fmt(v) : v;
+    paint();
+    applyPatch({ [key]: v });
+  });
+}
+
+function updateDrawerCode(){
+  const prefix = drawerTarget === 'hero' ? t('drawer.code.hero') : (t('drawer.code.card') + ' · ' + DEMO_CONFIGS[drawerTarget].num[lang]);
+
+  const code =
+`import { Textural } from '@aifire/textural';
+
+${prefix}
+const bg = new Textural('#card', {
+  text:      '${drawerState.text}',
+  mode:      '${drawerState.mode}',
+  blur:      ${drawerState.blur.toFixed(2)},
+  hue:       ${drawerState.hue},
+  intensity: ${drawerState.intensity.toFixed(2)},
+  scale:     ${drawerState.scale.toFixed(2)},
+  grain:     ${drawerState.grain.toFixed(2)},
+});`;
+
+  document.getElementById('pg-code').innerHTML = highlight(code);
+}
+
+function highlight(src){
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const tokens = [];
+  // 占位符用私用区字符而不是数字：数字会被下面的「数字高亮」当成代码里的数字裹进 span，
+  // 占位符一旦被包住就再也还原不回来（表现为代码面板里出现 1、2、3 这样的编号）。
+  const stash = (cls, txt) => {
+    tokens.push(`<span class="tok-${cls}">${esc(txt)}</span>`);
+    return `\u0000${String.fromCharCode(0xE000 + tokens.length - 1)}\u0000`;
+  };
+
+  src = src.replace(/\/\/[^\n]*/g, m => stash('com', m));
+  src = src.replace(/'[^']*'/g, m => stash('str', m));
+
+  src = esc(src);
+  src = src.replace(/\b(import|from|const|new|let|var|function|return)\b/g, '<span class="tok-key">$1</span>');
+  src = src.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
+  src = src.replace(/\b(Textural|update)\b/g, '<span class="tok-fn">$1</span>');
+  src = src.replace(/\u0000([\uE000-\uF8FF])\u0000/g, (_, ch) => tokens[ch.charCodeAt(0) - 0xE000]);
+  return src;
+}
+
+function bindDrawerControls(){
+  // 文字
+  const textInput = $('#pg-text');
+  textInput.addEventListener('input', () => {
+    applyPatch({ text: textInput.value || ' ' });
+  });
+
+  // 模式
+  $$('#pg-mode button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#pg-mode button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      applyPatch({ mode: btn.dataset.val });
+    });
+  });
+
+  // 滑块
+  bindRange('pg-blur',      'v-blur',      'blur',      v => v.toFixed(2));
+  bindRange('pg-hue',       'v-hue',       'hue',       v => String(Math.round(v)));
+  bindRange('pg-intensity', 'v-intensity', 'intensity', v => v.toFixed(2));
+  bindRange('pg-scale',     'v-scale',     'scale',     v => v.toFixed(2));
+  bindRange('pg-grain',     'v-grain',     'grain',     v => v.toFixed(2));
+
+  // 随机
+  $('#pg-random').addEventListener('click', () => {
+    const WORDS_ZH = ['灵感','专注','思考','创造','呼吸','远行','静谧','流动','边界','光年','潮汐','夜航','留白','生长','折叠','回声'];
+    const WORDS_EN = ['spark','focus','wonder','craft','breath','drift','still','flow','edge','light','tide','night','space','grow','fold','echo'];
+    const list = lang === 'zh' ? WORDS_ZH : WORDS_EN;
+    const w = list[Math.floor(Math.random() * list.length)];
+    const h = Math.floor(Math.random() * 360);
+
+    textInput.value = w;
+    setRange('pg-hue', 'v-hue', h, v => String(Math.round(v)));
+    applyPatch({ text: w, hue: h });
+  });
+
+  // 重置
+  $('#pg-reset').addEventListener('click', () => {
+    const origin = getTargetOrigin();
+    Object.assign(drawerState, origin);
+    fillDrawerUI();
+    // 一次性把 origin 全部应用到目标
+    getTargetBg().update(origin);
+    Object.assign(getTargetConfig(), origin);
+    updateDrawerCode();
+  });
+
+  // 复制
+  const copyBtn = $('#pg-copy');
+  copyBtn.addEventListener('click', async () => {
+    const code = $('#pg-code').innerText;
+    try{
+      await navigator.clipboard.writeText(code);
+      copyBtn.classList.add('done');
+      const prev = copyBtn.textContent;
+      copyBtn.textContent = t('drawer.copied');
+      setTimeout(() => {
+        copyBtn.classList.remove('done');
+        copyBtn.textContent = t('drawer.copy');
+      }, 1400);
+    }catch(_){}
+  });
+}
+
+/* -------------------- 代码示例 Tab -------------------- */
+function bindDocsTabs(){
+  $$('.docs-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const name = tab.dataset.tab;
+      $$('.docs-tab').forEach(t => t.classList.toggle('on', t === tab));
+      $$('.docs-pane').forEach(p => {
+        p.hidden = p.dataset.pane !== name;
+      });
+    });
+  });
+}
+
+/* -------------------- 滚动 / Reveal -------------------- */
+function bindScrollEffects(){
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive:true });
+}
+
+function bindReveal(){
+  const els = $$('.reveal');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(e => e.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -8% 0px' });
+  els.forEach(e => io.observe(e));
+}
+
+/* -------------------- 全局事件 -------------------- */
+function bindGlobalEvents(){
+  // Hero 的 Playground 按钮 → 打开 Hero 抽屉
+  $('#btn-playground').addEventListener('click', () => openDrawer('hero'));
+
+  // 关闭
+  $('#drawer-close').addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+  });
+
+  // 语言
+  $('#lang-toggle').addEventListener('click', () => {
+    lang = lang === 'zh' ? 'en' : 'zh';
+    try{ localStorage.setItem(STORAGE.lang, lang); }catch(_){}
+    applyI18n();
+    refreshShowcaseText();
+    updateTargetLabel();
+    updateDrawerCode();
+
+    // Hero 文字跟随语言（仅当还是默认词时）
+    const isDefault = heroConfig.text === '灵感' || heroConfig.text === 'spark';
+    if(isDefault){
+      const next = lang === 'zh' ? '灵感' : 'spark';
+      heroConfig.text = next;
+      heroBg.update({ text: next });
+      // 如果抽屉当前正编辑 Hero，同步输入框
+      if(drawerTarget === 'hero'){
+        drawerState.text = next;
+        $('#pg-text').value = next;
+        updateDrawerCode();
+      }
+    }
+  });
+
+  // 主题
+  $('#theme-toggle').addEventListener('click', () => {
+    theme = theme === 'light' ? 'dark' : 'light';
+    applyTheme();
+    const next = theme === 'dark' ? 'dark' : 'light';
+    bgs.forEach(bg => bg.update({ theme: next }));
+    if(previewBg) previewBg.update({ theme: next });
+    refreshShowcaseTheme();
+  });
+}
+
+/* -------------------- Agent 区块：复制提示词 -------------------- */
+function bindAgentCopy(){
+  const btn = $('#agent-copy');
+  if(!btn) return;
+  btn.addEventListener('click', async () => {
+    const text = $('#agent-prompt-code').textContent;
+    try{
+      await navigator.clipboard.writeText(text);
+      const prev = btn.textContent;
+      btn.classList.add('done');
+      btn.textContent = t('agent.copied');
+      setTimeout(() => { btn.classList.remove('done'); btn.textContent = prev; }, 1400);
+    }catch(_){}
+  });
+}
+
+/* -------------------- PWA -------------------- */
+function registerServiceWorker(){
+  // file:// 下没有 SW，直接跳过（本地双击打开也不会报错）
+  if(!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+
+  const toast = $('#update-toast');
+  const showUpdateToast = () => { if(toast) toast.hidden = false; };
+  let swReg = null;
+  let updateRequested = false;
+
+  $('#update-refresh').addEventListener('click', () => {
+    updateRequested = true;
+    // 新 SW 在待命 → 让它立刻接管，接管后 controllerchange 会刷新页面
+    if(swReg && swReg.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else location.reload();
+  });
+
+  // 只有用户点过提示才刷新：静默刷新会打断正在调参的人
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(updateRequested) location.reload();
+  });
+
+  window.addEventListener('load', async () => {
+    try{
+      // updateViaCache:'none' → sw.js 本身也每次重新校验，别被 HTTP 缓存卡住
+      swReg = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+      // 上次访问留下的「待命中」新版本
+      if(swReg.waiting && navigator.serviceWorker.controller) showUpdateToast();
+      swReg.addEventListener('updatefound', () => {
+        const incoming = swReg.installing;
+        if(!incoming) return;
+        incoming.addEventListener('statechange', () => {
+          // 装好且有旧版本在跑 = 真的更新了（首次安装不算）
+          if(incoming.state === 'installed' && navigator.serviceWorker.controller) showUpdateToast();
+        });
+      });
+    }catch(_){}
+  });
+
+  // 常驻标签页：切回来时顺手查一次有没有新版本
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && swReg) swReg.update().catch(() => {});
+  });
+}
+
+/* -------------------- 初始化 -------------------- */
+function init(){
+  applyTheme();
+  applyI18n();
+  bindScrollEffects();
+  bindReveal();
+  bindDocsTabs();
+  bindGlobalEvents();
+  bindPreviewControls();
+  bindAgentCopy();
+  registerServiceWorker();
+
+  requestAnimationFrame(() => {
+    // Hero 背景
+    heroBg = track(new Textural('#hero-bg', {
+      ...heroConfig,
+      theme: theme === 'dark' ? 'dark' : 'light',
+      animate: true
+    }));
+
+    // 4 张示例卡片
+    buildShowcase();
+
+    // 抽屉控件
+    bindDrawerControls();
+
+    // 抽屉初始展示 Hero 的配置
+    Object.assign(drawerState, heroConfig);
+    fillDrawerUI();
+    updateTargetLabel();
+    updateDrawerCode();
+  });
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
