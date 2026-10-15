@@ -600,6 +600,30 @@ export class Textural {
     return this;
   }
 
+  /**
+   * 随机重排样式参数（mode / hue / blur / intensity / scale / grain / speed / seed），
+   * 等价于 `bg.update({ ...随机样式, ...locked })`。
+   *
+   * `locked` 里的键会被**锁定**：既不参与随机，也保证取你给的值。不传参数 = 样式全随机。
+   * 文字与可访问性相关的参数不参与随机（text 是内容，theme/animate/fontWeight/fontFamily
+   * 关系到暗色适配与动效偏好），需要时用 `locked` 显式指定。
+   */
+  randomize(locked: TexturalOptions = {}): this {
+    const pick = (min: number, max: number) => min + Math.random() * (max - min);
+    const modes: TexturalMode[] = ['tile', 'flow', 'hero'];
+    return this.update({
+      mode: modes[Math.floor(Math.random() * modes.length)],
+      hue: Math.floor(Math.random() * 360),
+      blur: pick(0.25, 0.75),
+      intensity: pick(0.5, 0.8),
+      scale: pick(0.95, 1.35),
+      grain: pick(0.4, 0.65),
+      speed: pick(0.75, 1.25),
+      seed: Math.floor(Math.random() * 4294967296),
+      ...locked
+    });
+  }
+
   /** 导出当前背景为 PNG data URL */
   toDataURL(): string {
     this._draw(0);

@@ -1,5 +1,5 @@
 {
-  "name": "@aiblaze/textural",
+  "name": "@aifire/textural",
   "version": "1.0.0",
   "description": "把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas + WebGL。",
   "keywords": [

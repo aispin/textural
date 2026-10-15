@@ -1,13 +1,29 @@
-# 打 tag（v1.0.0 这种）→ 校验 → 构建 → 发 npm → 建 GitHub Release
+# 打 tag（v1.0.0 这种）→ 校验 → 构建 → 发布 npm → 建 GitHub Release
 #
-# ⚠️ 配套设置（手动做一次，workflow 改不了它）：
-#   Settings → Secrets and variables → Actions → New repository secret
-#   Name = NPM_TOKEN，Value = 有 @aiblaze 发布权限的 npm Automation Token
-#   没有这个 secret，publish 这一步会以 ENEEDAUTH 失败。
+# 不发 NPM_TOKEN：走 npm Trusted Publishing（OIDC 短时凭证），仓库里没有长期密钥。
+# 依据 docs.npmjs.com/trusted-publishers：
+#   - npm CLI ≥ 11.5.1、Node ≥ 22.14.0 → 这里用 Node 24 并把 npm 升到最新，稳过版本线
+#   - 需要权限 `id-token: write`（仅 GitHub 托管 runner；self-hosted 不支持）
+#   - 公开仓库 + 公开包 → provenance 自动生成，**不用**加 --provenance
+#   - GitHub Actions 里 npm 会自动优先用 OIDC，所以**不要**设 NODE_AUTH_TOKEN
 #
-# 发版的唯一动作就是打 tag：
-#   git tag v1.0.0 && git push origin v1.0.0
-# 版本号必须和 package.json 的 version 一致，否则第一步校验就拦下（不留半成品）。
+# ⚠️ 配套设置（在 npmjs.com 上做一次，workflow 改不了它）：
+#   npmjs.com → 该包 → Settings → Trusted Publisher → GitHub
+#     Organization or user: aispin
+#     Repository:           textural
+#     Workflow filename:    publish.yml        （只写文件名，不要带路径）
+#     Allowed actions:      npm publish
+#   首次必须先用传统方式（token 或网页）把包发出去 —— 包还不存在时绑不了 Trusted Publisher。
+#   绑好之后建议在 Settings → Publishing access 选
+#   "Require two-factor authentication and disallow tokens"，再把用过的 Automation Token 撤掉。
+#
+# 发版动作只有一个：git tag v1.0.0 && git push origin v1.0.0
+# 版本号必须与 package.json 的 version 一致，否则第一步校验就拦下（不留半成品）。
+#
+# 想要人工闸门（最大安全）：npmjs.com 的 Allowed actions 只勾 `npm stage publish`，
+# 把下面的 `npm publish` 换成 `npm stage publish`，再由维护者用 2FA 批准：
+#   npm stage list / npm stage view / npm stage approve <id>   （npm CLI ≥ 11.15.0）
+# 注意：staged publishing 只能用于**已存在**的包，且批准必须过 2FA，CI 里批不了。
 
 name: Publish to npm
 
@@ -18,7 +34,7 @@ on:
 
 permissions:
   contents: write   # 建 GitHub Release
-  id-token: write   # npm provenance（公开仓库可用）
+  id-token: write   # OIDC：Trusted Publishing 的必需品
 
 concurrency:
   group: publish
@@ -34,9 +50,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false   # 发布构建一律不开缓存
+
+      # Trusted Publishing 要 npm CLI ≥ 11.5.1（staged publishing 要 ≥ 11.15.0）；
+      # Node 自带的 npm 不保证够新，所以显式升级。
+      - name: Install latest npm
+        run: |
+          npm install -g npm@latest
+          node -v && npm -v
 
       - name: Install dependencies
         run: npm ci
@@ -57,10 +80,9 @@ jobs:
           echo "tag=$tag package.json=$pkg"
           [ "$tag" = "$pkg" ] || { echo "::error::tag $GITHUB_REF_NAME 与 package.json $pkg 不一致"; exit 1; }
 
-      - name: Publish to npm
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # 不传 NODE_AUTH_TOKEN：npm CLI 在 GitHub Actions 里自动用 OIDC 换临时凭证。
+      - name: Publish to npm (OIDC)
+        run: npm publish --access public
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')

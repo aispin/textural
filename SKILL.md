@@ -1,6 +1,6 @@
 ---
 name: textural
-description: 用 @aiblaze/textural 给容器生成"文字底纹"背景（卡片 / 封面 / Banner / 水印）。当用户要求把某个词或短语做成卡片背景、底纹、纹理、水印，或提到 Textural 时使用。
+description: 用 @aifire/textural 给容器生成"文字底纹"背景（卡片 / 封面 / Banner / 水印）。当用户要求把某个词或短语做成卡片背景、底纹、纹理、水印，或提到 Textural 时使用。
 ---
 
 # Textural —— 把文字变成卡片背景
@@ -22,25 +22,28 @@ description: 用 @aiblaze/textural 给容器生成"文字底纹"背景（卡片 
 ## 安装
 
 ```bash
-npm i @aiblaze/textural
+npm i @aifire/textural
 ```
 
 或在 HTML 里直接引 IIFE（挂 `window.Textural`，无需打包器）：
 
 ```html
-<script src="https://unpkg.com/@aiblaze/textural/dist/textural.iife.min.js"></script>
+<script src="https://unpkg.com/@aifire/textural/dist/textural.iife.min.js"></script>
 ```
 
 ## 最小可用用法
 
 ```ts
-import { Textural } from '@aiblaze/textural';
+import { Textural } from '@aifire/textural';
 
 // 容器要有尺寸；库会补 position:relative / overflow:hidden 并插入底层 canvas
 const bg = new Textural('#card', { text: '灵感' });
 
 // 改文案（最常见需求）
 bg.update({ text: '专注' });
+
+// 「换一个」按钮：换词 + 样式随机；不想让排布乱跳就锁定它
+bg.randomize({ text: '远行', mode: 'tile' });
 
 // 卸载必须释放，否则泄漏 WebGL context
 bg.destroy();
@@ -54,10 +57,18 @@ React / Vue 的挂载与清理范例见 [README](./README.md#快速开始)。
 | --- | --- | --- |
 | `new Textural(target, options?)` | `Textural` | `target` 为选择器或元素；找不到容器抛 `[Textural] container not found: <target>` |
 | `update(options)` | `this` | 增量改配置并立即重绘，复用 WebGL context 与离屏画布 |
+| `randomize(locked?)` | `this` | 随机重排样式参数；`locked` 里的键锁定不随机，不传 = 样式全随机 |
 | `toDataURL()` | `string` | 当前背景的 PNG data URL |
 | `destroy()` | `void` | 释放 context、解绑 ResizeObserver、摘掉 canvas |
 
 属性：`el`、`opts`（补齐默认值后的配置）、`theme`、`hue`、`seed`、静态 `Textural.defaults`。
+
+`randomize()` 随机的只有样式参数：`mode`、`hue`、`blur`、`intensity`、`scale`、`grain`、`speed`、`seed`。`text` / `theme` / `animate` / `fontWeight` / `fontFamily` / `blurMaxRatio` / `dprMax` **不会被随机**——要改就在入参里显式给出（这些键同样会被锁定）：
+
+```ts
+bg.randomize({ text: '回声' });             // 换词，样式随机
+bg.randomize({ mode: 'tile', hue: 220 });  // 锁定排布与品牌色
+```
 
 ## 选项速查（15 项，全部可热更新）
 

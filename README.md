@@ -2,10 +2,10 @@
 
 把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas 2D + WebGL 三层渲染。
 
-[![npm](https://img.shields.io/npm/v/@aiblaze/textural.svg)](https://www.npmjs.com/package/@aiblaze/textural)
-[![license](https://img.shields.io/npm/l/@aiblaze/textural.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/@aifire/textural.svg)](https://www.npmjs.com/package/@aifire/textural)
+[![license](https://img.shields.io/npm/l/@aifire/textural.svg)](./LICENSE)
 
-- **4.71KB gzip**（IIFE 全量构建，真实测量见[体积](#体积)）
+- **4.8KB gzip**（IIFE 全量构建，实测 4.83KB，见[体积](#体积)）
 - **0 运行时依赖**
 - **3 种排布**：`tile` 无缝网格 / `flow` 波浪流动 / `hero` 超大水印
 - **TypeScript 类型随包发布**，`dist/index.d.ts` 与实现同源生成
@@ -15,14 +15,14 @@
 ## 安装
 
 ```bash
-npm i @aiblaze/textural
-# pnpm add @aiblaze/textural / yarn add @aiblaze/textural
+npm i @aifire/textural
+# pnpm add @aifire/textural / yarn add @aifire/textural
 ```
 
 不想用打包器，直接引 IIFE 单文件（挂到 `window.Textural`）：
 
 ```html
-<script src="https://unpkg.com/@aiblaze/textural/dist/textural.iife.min.js"></script>
+<script src="https://unpkg.com/@aifire/textural/dist/textural.iife.min.js"></script>
 <script>
   new Textural('#card', { text: '灵感' });
 </script>
@@ -33,7 +33,7 @@ npm i @aiblaze/textural
 ## 快速开始
 
 ```ts
-import { Textural } from '@aiblaze/textural';
+import { Textural } from '@aifire/textural';
 
 const bg = new Textural('#card', {
   text: '灵感',   // 最多 12 个字符
@@ -51,7 +51,7 @@ React：
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import { Textural } from '@aiblaze/textural';
+import { Textural } from '@aifire/textural';
 
 export function Card({ title }: { title: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -73,7 +73,7 @@ Vue：
 ```vue
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue';
-import { Textural } from '@aiblaze/textural';
+import { Textural } from '@aifire/textural';
 
 const el = ref(null);
 let bg = null;
@@ -90,10 +90,22 @@ onBeforeUnmount(() => bg?.destroy());
 | --- | --- |
 | `new Textural(target, options?)` | `target` 是选择器或元素；容器不存在时抛 `[Textural] container not found` |
 | `bg.update(options)` | 增量改配置并立即重绘；复用已有 WebGL context 与离屏画布，返回 `this` |
+| `bg.randomize(locked?)` | 随机重排样式参数；`locked` 里的键被锁定不参与随机，返回 `this` |
 | `bg.toDataURL()` | 导出当前背景为 PNG data URL |
 | `bg.destroy()` | 释放 WebGL context、事件监听并摘掉 canvas |
 
 可读属性：`bg.el`、`bg.opts`（补齐默认值后的配置）、`bg.theme`、`bg.hue`、`bg.seed`、`Textural.defaults`。
+
+### randomize()
+
+```ts
+bg.randomize();                            // 样式全随机
+bg.randomize({ text: '回声' });             // 换词，样式跟着随机
+bg.randomize({ mode: 'hero', hue: 220 });  // 锁定排布与色相，其余随机
+```
+
+随机的范围：`mode`、`hue`、`blur`、`intensity`、`scale`、`grain`、`speed`、`seed`。
+**不随机**的是 `text`（内容，不是样式）、`theme` / `animate` / `fontWeight` / `fontFamily`（暗色适配、动效偏好、字体——随机它们会破坏可访问性与品牌一致性）以及 `blurMaxRatio` / `dprMax`（技术参数）。要固定其中任意一项，或者干脆指定某个样式参数，都走 `locked` 入参。
 
 ### 选项
 
@@ -126,8 +138,11 @@ onBeforeUnmount(() => bg?.destroy());
 ```ts
 const bg = new Textural('#card', { text: userText });   // 建
 bg.update({ text: another });                           // 改
+bg.randomize({ text: another });                        // 换词 + 样式随机（想省事就用这个）
 bg.destroy();                                           // 卸
 ```
+
+**想给用户一个「换一个」按钮**：`bg.randomize({ text: 新词 })` 一行搞定；需要保持品牌色或排布时把 `hue` / `mode` 放进 `locked`。
 
 **三个必须记住的约束**：
 
@@ -149,10 +164,30 @@ npm run build:site  # 组装 site/ 后打开 demo 页面看效果
 
 | 产物 | raw | gzip | brotli |
 | --- | --- | --- | --- |
-| `dist/index.js`（ESM，未压缩，交给使用方打包器） | 16.94KB | 5.74KB | 4.98KB |
-| `dist/textural.iife.min.js`（IIFE，已压缩） | 11.56KB | **4.71KB** | 4.19KB |
+| `dist/index.js`（ESM，未压缩，交给使用方打包器） | 17.92KB | 6.28KB | 5.39KB |
+| `dist/textural.iife.min.js`（IIFE，已压缩） | 11.87KB | **4.83KB** | 4.30KB |
 
-对外口径的 “4.7KB gzip” 指第二行。类型声明不计入运行时体积。
+对外口径的 “4.8KB gzip” 指第二行。类型声明不计入运行时体积。
+
+## 发版
+
+发版只有一个动作：
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+CI（[publish.yml](./.github/workflows/publish.yml)）会校验 tag 与 `package.json` 版本一致 → 构建 → 发布 npm → 建 GitHub Release；版本对不上会直接失败，不产生半成品。
+
+**不需要 NPM_TOKEN**：流水线走 npm 的 [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC），每次发布用 GitHub Actions 现场换一次性凭证，仓库里不存长期密钥，provenance 也自动生成。前提三条：
+
+- npmjs.com → 该包 → Settings → Trusted Publisher 绑定 `aispin` / `textural` / `publish.yml`
+- workflow 里有 `id-token: write`（已配置）
+- npm CLI ≥ 11.5.1、Node ≥ 22.14.0（workflow 已用 Node 24 + 最新 npm）
+
+首次发布是唯一例外：包还不存在时绑不了 Trusted Publisher，得先用传统方式（token 或网页上传）发出 1.0.0，绑好之后建议在 Settings → Publishing access 选 “Require two-factor authentication and disallow tokens”，把用过的 token 撤掉。
+
+**想要人工放行**（每次发版都过一遍 2FA）：npm 的 [Staged publishing](https://docs.npmjs.com/staged-publishing) 能做，但它**不能替代凭证**——`npm stage publish` 只是把包放进暂存区，还要维护者用 2FA 批准才真正上线；同样要求包已存在（npm CLI ≥ 11.15.0）。把 workflow 里的 `npm publish` 换成 `npm stage publish`、并在 Trusted Publisher 的 Allowed actions 里只勾 staged 即可，具体写法见 workflow 顶部注释。
 
 ## 开发
 

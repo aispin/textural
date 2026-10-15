@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Textural — 把文字变成卡片背景</title>
-<meta name="description" content="Textural 是一个 4.7KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
+<meta name="description" content="Textural 是一个 4.8KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
 <style>
 /* ==========================================================================
    Design Tokens
@@ -825,7 +825,7 @@ footer{
       <div class="hero-content">
         <span class="badge">
           <span class="pill" data-i18n="hero.badge.pill">v1.0</span>
-          <span data-i18n="hero.badge.text">零依赖 · 4.7KB gzip</span>
+          <span data-i18n="hero.badge.text">零依赖 · 4.8KB gzip</span>
         </span>
         <h1>
           <span data-i18n="hero.title.1">把文字</span>
@@ -880,17 +880,17 @@ footer{
 
         <div class="docs-pane" data-pane="install">
 <pre><code class="js"># npm
-npm install @aiblaze/textural
+npm install @aifire/textural
 
 # 或者用 CDN（单文件，无依赖）
-&lt;script src="https://unpkg.com/@aiblaze/textural/dist/textural.iife.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/@aifire/textural/dist/textural.iife.min.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   new Textural('#card', { text: '灵感' });
 &lt;/script&gt;</code></pre>
         </div>
 
         <div class="docs-pane" data-pane="usage" hidden>
-<pre><code class="js">import { Textural } from '@aiblaze/textural';
+<pre><code class="js">import { Textural } from '@aifire/textural';
 
 // 传入容器选择器和配置
 const bg = new Textural('#card', {
@@ -911,8 +911,11 @@ bg.update({
   blur: 0.6,
 });
 
-// 或者换一个词并随机色相
-bg.update({ text: '回声', hue: Math.random() * 360 });</code></pre>
+// 或者换一个词，其余样式全随机
+bg.randomize({ text: '回声' });
+
+// 只锁定想要的参数，剩下的随机
+bg.randomize({ mode: 'hero', hue: 220 });</code></pre>
         </div>
 
         <div class="docs-pane" data-pane="cleanup" hidden>
@@ -933,9 +936,11 @@ const bg = new Textural('#card', { text: '灵感' });
 // 改文案 —— 90% 的需求就这一行
 bg.update({ text: '专注' });
 
-// 要换配色但不想选：交给哈希 / 随机
+// 要换配色但不想选：交给哈希，或者整体随机
 bg.update({ hue: null });              // 由文字推导
-bg.update({ hue: Math.random() * 360 });
+bg.randomize();                        // 样式全随机
+bg.randomize({ text: '回声' });         // 换词，样式随机
+bg.randomize({ mode: 'hero' });        // 锁定排布，其余随机
 
 // 卸载时释放 WebGL context（不调用 = 泄漏 context）
 bg.destroy();</code></pre>
@@ -1101,14 +1106,14 @@ const I18N = {
     'nav.docs': '接入与配置',
 
     'hero.badge.pill': 'v1.0',
-    'hero.badge.text': '零依赖 · 4.7KB gzip',
+    'hero.badge.text': '零依赖 · 4.8KB gzip',
     'hero.title.1': '把文字',
     'hero.title.2': '变成卡片背景',
     'hero.subtitle': '输入任意字或词，生成柔和、不抢镜的卡片底纹。Canvas + SVG + GLSL 三层渲染，支持高斯模糊、色彩流动、胶片颗粒。',
     'hero.cta.playground': 'Playground',
     'hero.cta.docs': '接入与配置',
 
-    'show.size.num': '4.7KB',
+    'show.size.num': '4.8KB',
     'show.size.label': 'gzip 体积',
     'show.dep.num': '0',
     'show.dep.label': '运行时依赖',
@@ -1173,14 +1178,14 @@ const I18N = {
     'nav.docs': 'Docs & API',
 
     'hero.badge.pill': 'v1.0',
-    'hero.badge.text': 'Zero deps · 4.7KB gzipped',
+    'hero.badge.text': 'Zero deps · 4.8KB gzipped',
     'hero.title.1': 'Turn text into',
     'hero.title.2': 'card backgrounds',
     'hero.subtitle': 'Type any word and get a soft, unobtrusive card texture. Rendered by Canvas + SVG + GLSL with gaussian blur, color flow, and film grain.',
     'hero.cta.playground': 'Playground',
     'hero.cta.docs': 'Docs & API',
 
-    'show.size.num': '4.7KB',
+    'show.size.num': '4.8KB',
     'show.size.label': 'gzipped',
     'show.dep.num': '0',
     'show.dep.label': 'runtime deps',
@@ -1302,7 +1307,7 @@ let heroBg = null;
 /* -------------------- 4 张示例卡片 -------------------- */
 const DEMO_CONFIGS = {
   size: {
-    num: { zh: '4.7KB', en: '4.7KB' },
+    num: { zh: '4.8KB', en: '4.8KB' },
     label: { zh: 'gzip 体积', en: 'gzipped' },
     bg: { text:'轻', mode:'tile', hue:222, blur:0.35, intensity:0.55, scale:1.05, grain:0.55 }
   },
@@ -1491,7 +1496,7 @@ function updateDrawerCode(){
   const prefix = drawerTarget === 'hero' ? t('drawer.code.hero') : (t('drawer.code.card') + ' · ' + DEMO_CONFIGS[drawerTarget].num[lang]);
 
   const code =
-`import { Textural } from '@aiblaze/textural';
+`import { Textural } from '@aifire/textural';
 
 ${prefix}
 const bg = new Textural('#card', {
