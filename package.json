@@ -10,7 +10,10 @@
     "webgl",
     "shader",
     "card",
+    "card-background",
     "watermark",
+    "text-watermark",
+    "texture",
     "pattern",
     "zero-dependency"
   ],

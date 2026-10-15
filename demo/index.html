@@ -3,8 +3,49 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Textural — 把文字变成卡片背景</title>
-<meta name="description" content="Textural 是一个 5.8KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
+<title>Textural — Turn text into card backgrounds·把文字变成卡片背景</title>
+<meta name="description" content="把任意文字渲染成柔和、不抢镜的卡片背景：零依赖 5.8KB（gzip）的 JS 库，Canvas + WebGL 渲染，tile/flow/hero 三种排布，支持矢量 SVG 与 PNG 导出，TypeScript 类型随包发布。 Turn any word into a soft, unobtrusive card background: a zero-dependency 5.8KB (gzipped) library with Canvas + WebGL rendering, tile/flow/hero layouts, SVG and PNG export, and shipped TypeScript types." />
+<link rel="canonical" href="https://aispin.github.io/textural/" />
+
+<!-- 社交媒体 / 搜索结果预览 -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Textural" />
+<meta property="og:title" content="Textural — Turn text into card backgrounds·把文字变成卡片背景" />
+<meta property="og:description" content="零依赖 5.8KB 的文字底纹库：Canvas + WebGL，tile/flow/hero 三种排布，矢量 SVG 与 PNG 导出，TypeScript 类型齐全。 Zero-dependency 5.8KB textures from any text: tile/flow/hero layouts, SVG + PNG export, TypeScript types included." />
+<meta property="og:url" content="https://aispin.github.io/textural/" />
+<meta property="og:image" content="https://aispin.github.io/textural/assets/og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Textural — 把文字变成卡片背景" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Textural — Turn text into card backgrounds·把文字变成卡片背景" />
+<meta name="twitter:description" content="零依赖 5.8KB 的文字底纹库：tile/flow/hero 三种排布，矢量 SVG 与 PNG 导出，TypeScript 类型齐全。 Zero-dependency card textures from any text." />
+<meta name="twitter:image" content="https://aispin.github.io/textural/assets/og.jpg" />
+
+<!-- 结构化数据：让搜索引擎把它当成一个软件项目而不是普通网页 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Textural",
+  "alternateName": ["@aifire/textural"],
+  "softwareVersion": "__BUILD_VERSION__",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web browser",
+  "description": "把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas + WebGL，支持 tile/flow/hero 三种排布与矢量 SVG / PNG 导出，TypeScript 类型随包发布。",
+  "url": "https://aispin.github.io/textural/",
+  "codeRepository": "https://github.com/aispin/textural",
+  "downloadUrl": "https://www.npmjs.com/package/@aifire/textural",
+  "programmingLanguage": "TypeScript",
+  "license": "https://github.com/aispin/textural/blob/main/LICENSE",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "ZEO", "url": "https://github.com/aispin" }
+}
+</script>
+
 <meta name="theme-color" content="#4f6bff" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#090b10" media="(prefers-color-scheme: dark)" />
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
@@ -1821,7 +1862,15 @@ function downloadPNG(){
 
 // SVG 直接按目标尺寸生成，不需要离屏实例
 function downloadSVG(){
-  const svg = getTargetBg().toSVG(exportSize.w, exportSize.h);
+  const src = getTargetBg();
+  // 兜底：浏览器里跑的是旧版 textural.js（例如被旧 SW 缓存着）时别抛异常，
+  // 直接把「有新版本可用」的提示亮出来，用户点一下刷新就能用上 toSVG。
+  if(typeof src.toSVG !== 'function'){
+    const toast = $('#update-toast');
+    if(toast) toast.hidden = false;
+    return;
+  }
+  const svg = src.toSVG(exportSize.w, exportSize.h);
   triggerDownload('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), exportFileName('svg'));
 }
 

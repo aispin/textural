@@ -57,7 +57,10 @@ if (withSite) {
   const versionTag = /(<span class="pill" id="hero-version">)[^<]*(<\/span>)/;
   // 只校验「占位符在不在」：注入值正好等于占位符（版本没变）也是合法情况
   if (!versionTag.test(html)) throw new Error('注入版本号失败：demo/index.html 里找不到 #hero-version');
-  const stamped = html.replace(versionTag, (_m, open, close) => `${open}v${version}${close}`);
+  const stamped = html
+    .replace(versionTag, (_m, open, close) => `${open}v${version}${close}`)
+    // 结构化数据里的 softwareVersion 也一起注入，别写死
+    .replaceAll('__BUILD_VERSION__', version);
   writeFileSync(at('site/index.html'), stamped);
 
   copyFileSync(at('dist/textural.iife.min.js'), at('site/textural.js'));
