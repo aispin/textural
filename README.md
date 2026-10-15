@@ -14,6 +14,12 @@ Turn any word into a soft, unobtrusive card background. Zero dependencies — a 
 
 Live demo: <https://aispin.github.io/textural/> — installable as a PWA. Its tuning panel renders a live copy of the background you are editing and exports it as a PNG at any width and height. The page also shows how to hand `SKILL.md` to a coding agent.
 
+## Preview
+
+| `tile` — seamless grid | `flow` — flowing waves | `hero` — giant watermark |
+| --- | --- | --- |
+| ![tile mode](./docs/screenshots/tile.jpg) | ![flow mode](./docs/screenshots/flow.jpg) | ![hero mode](./docs/screenshots/hero.jpg) |
+
 ## Install
 
 ```bash

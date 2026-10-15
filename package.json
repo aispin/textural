@@ -39,6 +39,7 @@
   },
   "files": [
     "dist",
+    "docs/screenshots",
     "README.md",
     "README.zh-CN.md",
     "LICENSE",

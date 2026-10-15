@@ -14,6 +14,12 @@
 
 在线 Demo：<https://aispin.github.io/textural/> —— 可安装为 PWA。面板里会实时渲染一份"正在调的那张背景"的副本，并且能按任意宽高把它导出成 PNG；页面上还有一节讲怎么把 `SKILL.md` 交给编码助手。
 
+## 效果
+
+| `tile` 无缝网格 | `flow` 波浪流动 | `hero` 超大水印 |
+| --- | --- | --- |
+| ![tile 模式](./docs/screenshots/tile.jpg) | ![flow 模式](./docs/screenshots/flow.jpg) | ![hero 模式](./docs/screenshots/hero.jpg) |
+
 ## 安装
 
 ```bash
