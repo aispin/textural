@@ -52,9 +52,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" \
-                  --label "autorelease: pending" --state open \
-                  --json number --jq '.[0].number // empty')"
+          # 按分支名找，不按 label：label（autorelease: pending）是 release-please
+          # 建完 PR 之后才补上的，早几秒跑会查不到（踩过）。
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
+                  --json number,headRefName \
+                  --jq '[.[] | select(.headRefName | startswith("release-please--"))][0].number // empty')"
           if [ -n "$pr" ]; then
             gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --merge --auto
             echo "已为 Release PR #$pr 开启自动合并"
