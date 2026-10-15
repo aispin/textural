@@ -172,7 +172,7 @@ The “5.8KB gzipped” figure refers to the second row. Type declarations are n
 
 ## Releasing
 
-Versions are never edited by hand. [release-please](https://github.com/googleapis/release-please) derives them from [Conventional Commits](https://www.conventionalcommits.org/):
+Versions are never edited by hand. Every push to `main` runs [`publish.yml`](./.github/workflows/publish.yml), which derives the next version from [Conventional Commits](https://www.conventionalcommits.org/) and releases it in the same run:
 
 | Commit | Result |
 | --- | --- |
@@ -181,15 +181,14 @@ Versions are never edited by hand. [release-please](https://github.com/googleapi
 | `feat!: …`, or `BREAKING CHANGE:` in the body | major release |
 | `docs:` / `chore:` / `ci:` / `style:` / `refactor:` / `test:` | no release |
 
-Every push to `main` runs [`publish.yml`](./.github/workflows/publish.yml):
+The run creates the tag and the GitHub Release, then publishes to npm — authenticated with npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), so the repository stores no token and provenance attestations are generated automatically. One-time setup on the npm side: package → Settings → Trusted Publisher → GitHub, with `Organization or user: aispin`, `Repository: textural`, `Workflow filename: publish.yml`, `Allowed actions: npm publish`.
 
-1. release-please opens (or updates) a **Release PR** that already contains the next version in `package.json` and the new `CHANGELOG.md` entries.
-2. You review and merge that PR.
-3. The same workflow runs again, creates the tag and the GitHub Release, then publishes with `npm publish`.
+No release PR is opened. We tried that first, and both variants hit a wall: GitHub refuses to enable auto-merge on a branch that has no protection rules, and a merge performed with the workflow's `GITHUB_TOKEN` neither triggers the follow-up runs nor lets the workflow create the release for it. `skip-github-pull-request: true` sidesteps all of it.
 
-Publishing is authenticated with npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC): the repository stores no long-lived token, and provenance attestations are generated automatically. One-time setup on the npm side — package → Settings → Trusted Publisher → GitHub, with `Organization or user: aispin`, `Repository: textural`, `Workflow filename: publish.yml`, `Allowed actions: npm publish`. If you rename the workflow file, update that field as well.
+Want a human gate on every release? Set the trusted publisher's Allowed actions to `npm stage publish` only, swap `npm publish` for `npm stage publish` in the workflow, and approve each version with 2FA on npmjs.com.
 
-Prefer a manual gate on every release? Bind only `npm stage publish` and swap `npm publish` for `npm stage publish` in the workflow — each release then waits for a maintainer's 2FA approval on npmjs.com (note that staged publishing only works for a package that already exists).
+If a tag exists but the npm publish failed, re-run it: Actions → Release → Run workflow with `publish_current_version` checked; it rebuilds the current `package.json` version and publishes that.
+
 
 ## Development
 

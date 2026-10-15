@@ -173,7 +173,7 @@ npm run build:site  # 组装 site/（demo + IIFE）本地看效果
 
 ## 发版
 
-版本号从不手动改。[release-please](https://github.com/googleapis/release-please) 依据 [Conventional Commits](https://www.conventionalcommits.org/) 推导：
+版本号从不手动改。每次推 `main` 都会跑 [`publish.yml`](./.github/workflows/publish.yml)，依据 [Conventional Commits](https://www.conventionalcommits.org/) 推导下一个版本，并在**同一次运行里**完成发布：
 
 | commit | 结果 |
 | --- | --- |
@@ -182,15 +182,14 @@ npm run build:site  # 组装 site/（demo + IIFE）本地看效果
 | `feat!: …`，或 body 里写 `BREAKING CHANGE:` | major |
 | `docs:` / `chore:` / `ci:` / `style:` / `refactor:` / `test:` | 不发版 |
 
-每次推 `main` 都会跑 [`.github/workflows/publish.yml`](./.github/workflows/publish.yml)：
+这次运行会打 tag、建 GitHub Release，然后把包发到 npm —— 认证走 npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC），仓库里不存任何令牌，provenance 自动生成。npm 侧只需配置一次：包 → Settings → Trusted Publisher → GitHub，填 `Organization or user: aispin`、`Repository: textural`、`Workflow filename: publish.yml`、`Allowed actions: npm publish`。
 
-1. release-please 开（或更新）一个 **Release PR**，里面已经把 `package.json` 的版本号和 `CHANGELOG.md` 的条目改好了；
-2. 你 review 并合并这个 PR；
-3. 同一条流水线再次运行，打 tag、建 GitHub Release，然后 `npm publish`。
+**不开 Release PR**。这条路先试过，两种写法都被墙挡住：GitHub 不允许在没有分支保护规则的分支上启用 auto-merge；而用 workflow 的 `GITHUB_TOKEN` 做的合并，既不会触发后续 workflow，也不允许这个 workflow 再给那次合并建 Release。改用 `skip-github-pull-request: true` 直接发版，绕开全部问题。
 
-发布用 npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC）认证：仓库里不存长期令牌，provenance 自动生成。npm 侧只需配置一次——包 → Settings → Trusted Publisher → GitHub，填 `Organization or user: aispin`、`Repository: textural`、`Workflow filename: publish.yml`、`Allowed actions: npm publish`。如果改了 workflow 文件名，记得同步改这个字段。
+想要人工闸门：Trusted Publisher 只勾 `npm stage publish`，把 workflow 里的 `npm publish` 换成 `npm stage publish`，之后每版都在 npmjs.com 上过一遍 2FA。
 
-想给每次发版加一道人工闸门：Trusted Publisher 只勾 `npm stage publish`，并把 workflow 里的 `npm publish` 换成 `npm stage publish`，之后每次发布都要维护者在 npmjs.com 上用 2FA 批准（注意 staged publishing 只能用于已存在的包）。
+如果 tag 建好了但 npm 发布失败：Actions → Release → Run workflow，勾上 `publish_current_version`，它会按 `package.json` 当前版本重新构建并发布。
+
 
 ## 开发
 
