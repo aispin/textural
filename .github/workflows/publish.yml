@@ -51,8 +51,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           package-manager-cache: false   # 发布构建一律不开缓存
+          # 不传 registry-url：否则 setup-node 会往 .npmrc 写一行空的 ${NODE_AUTH_TOKEN}，
+          # 可能盖掉下面的 OIDC。仓库与 access 都由 package.json 的 publishConfig 提供。
 
       # Trusted Publishing 要 npm CLI ≥ 11.5.1（staged publishing 要 ≥ 11.15.0）；
       # Node 自带的 npm 不保证够新，所以显式升级。
@@ -80,9 +81,22 @@ jobs:
           echo "tag=$tag package.json=$pkg"
           [ "$tag" = "$pkg" ] || { echo "::error::tag $GITHUB_REF_NAME 与 package.json $pkg 不一致"; exit 1; }
 
-      # 不传 NODE_AUTH_TOKEN：npm CLI 在 GitHub Actions 里自动用 OIDC 换临时凭证。
-      - name: Publish to npm (OIDC)
-        run: npm publish --access public
+      # 默认走 OIDC（npm CLI 在 GitHub Actions 里自动用它换临时凭证）。
+      # 只有首次发布需要 NPM_TOKEN：包还不存在时绑不了 Trusted Publisher。
+      # 绑好 Trusted Publisher 后把仓库里的 NPM_TOKEN secret 删掉，这里就自动变成纯 OIDC。
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" >> "$npmrc"
+            echo "NPM_TOKEN 已配置 → 首次发布走 token（OIDC 优先，未绑定 Trusted Publisher 时回落）"
+          else
+            echo "未配置 NPM_TOKEN → 走 OIDC Trusted Publishing"
+          fi
+          npm publish
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
