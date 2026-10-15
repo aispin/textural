@@ -185,7 +185,7 @@ CI（[publish.yml](./.github/workflows/publish.yml)）会校验 tag 与 `package
 - workflow 里有 `id-token: write`（已配置）
 - npm CLI ≥ 11.5.1、Node ≥ 22.14.0（workflow 已用 Node 24 + 最新 npm）
 
-首次发布是唯一例外：包还不存在时绑不了 Trusted Publisher，得先用传统方式（token 或网页上传）发出 1.0.0，绑好之后建议在 Settings → Publishing access 选 “Require two-factor authentication and disallow tokens”，把用过的 token 撤掉。
+首次发布是唯一例外：包还不存在时绑不了 Trusted Publisher，得先用传统方式（token）发一次。注意用 token 发新包时 npm 会把它先放进**暂存区**——registry 上只出现 `0.0.0-stage` 占位，需要维护者在 npmjs.com 的 Staged Packages 页（或 `npm stage approve <id>`）用 2FA 批准才真正上线。包名一旦占位，Settings 里的 Trusted Publisher 就能绑了；绑好之后建议在 Settings → Publishing access 选 “Require two-factor authentication and disallow tokens”，把用过的 token 撤掉。
 
 **想要人工放行**（每次发版都过一遍 2FA）：npm 的 [Staged publishing](https://docs.npmjs.com/staged-publishing) 能做，但它**不能替代凭证**——`npm stage publish` 只是把包放进暂存区，还要维护者用 2FA 批准才真正上线；同样要求包已存在（npm CLI ≥ 11.15.0）。把 workflow 里的 `npm publish` 换成 `npm stage publish`、并在 Trusted Publisher 的 Allowed actions 里只勾 staged 即可，具体写法见 workflow 顶部注释。
 
