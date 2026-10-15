@@ -1,0 +1,69 @@
+# 打 tag（v1.0.0 这种）→ 校验 → 构建 → 发 npm → 建 GitHub Release
+#
+# ⚠️ 配套设置（手动做一次，workflow 改不了它）：
+#   Settings → Secrets and variables → Actions → New repository secret
+#   Name = NPM_TOKEN，Value = 有 @aiblaze 发布权限的 npm Automation Token
+#   没有这个 secret，publish 这一步会以 ENEEDAUTH 失败。
+#
+# 发版的唯一动作就是打 tag：
+#   git tag v1.0.0 && git push origin v1.0.0
+# 版本号必须和 package.json 的 version 一致，否则第一步校验就拦下（不留半成品）。
+
+name: Publish to npm
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 建 GitHub Release
+  id-token: write   # npm provenance（公开仓库可用）
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # tag 与 package.json 版本必须一致：不一致说明发错版本了，直接停手。
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          echo "tag=$tag package.json=$pkg"
+          [ "$tag" = "$pkg" ] || { echo "::error::tag $GITHUB_REF_NAME 与 package.json $pkg 不一致"; exit 1; }
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes

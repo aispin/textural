@@ -1,0 +1,72 @@
+# 构建 demo 并推成 gh-pages 分支（Pages 的发布源就是这个分支）
+#
+# ⚠️ 配套设置（在 GitHub 仓库里手动做一次，workflow 改不了它）：
+#   Settings → Pages → Build and deployment → Source = **Deploy from a branch**
+#   Branch = `gh-pages` / `(root)`
+#   如果留在 "GitHub Actions" 模式，这个分支不会被发布（推上去是静默不生效）。
+#
+#   也能用命令行做（需要 gh 已登录且有 admin 权限；CI 里的 GITHUB_TOKEN 权限不够，
+#   所以**只能本地做一次**）：
+#     gh api -X PUT repos/aispin/textural/pages \
+#       -f build_type=legacy -f 'source[branch]=gh-pages' -f 'source[path]=/'
+#   （方括号必须加引号，否则 zsh 会当 glob 报 no matches found。）
+#
+# ⚠️ gh-pages 是**生成物**分支，别在上面手写东西，每次都是 force push 覆盖。
+
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build demo site
+        run: npm run build:site
+
+      - name: Sanity-check site/
+        run: |
+          set -euo pipefail
+          test -f site/index.html  || { echo "::error::site/index.html 缺失"; exit 1; }
+          test -f site/textural.js || { echo "::error::site/textural.js 缺失"; exit 1; }
+          du -sh site
+
+      - name: Push site/ to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd site
+          # 在 site/ 里建一个临时仓库：不碰工作区，推完这个 .git 随 runner 一起消失
+          git init -q
+          git symbolic-ref HEAD refs/heads/gh-pages
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -q -m "deploy: ${GITHUB_SHA::7} ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            HEAD:refs/heads/gh-pages
+          echo "已推送 gh-pages：${GITHUB_SHA}"

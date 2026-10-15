@@ -1,0 +1,64 @@
+{
+  "name": "@aiblaze/textural",
+  "version": "1.0.0",
+  "description": "把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas + WebGL。",
+  "keywords": [
+    "textural",
+    "background",
+    "texture",
+    "canvas",
+    "webgl",
+    "shader",
+    "card",
+    "watermark",
+    "pattern",
+    "zero-dependency"
+  ],
+  "license": "MIT",
+  "author": "aispin",
+  "homepage": "https://aispin.github.io/textural/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aispin/textural.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aispin/textural/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/textural.iife.min.js",
+  "jsdelivr": "./dist/textural.iife.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SKILL.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:site": "node scripts/build.mjs --site",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
