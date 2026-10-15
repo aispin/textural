@@ -5,10 +5,11 @@
 #   Branch = `gh-pages` / `(root)`
 #   如果留在 "GitHub Actions" 模式，这个分支不会被发布（推上去是静默不生效）。
 #
-#   也能用命令行做（需要 gh 已登录且有 admin 权限；CI 里的 GITHUB_TOKEN 权限不够，
-#   所以**只能本地做一次**）：
-#     gh api -X PUT repos/aispin/textural/pages \
+#   也能用命令行做（需要 gh 已登录且是仓库 owner；CI 里的 GITHUB_TOKEN 权限不够，
+#   所以**只能本地做一次**）。**首次**用 POST 创建（Pages 还没开时 PUT 会 404）：
+#     gh api -X POST repos/aispin/textural/pages \
 #       -f build_type=legacy -f 'source[branch]=gh-pages' -f 'source[path]=/'
+#   已开过、只想改发布源时用 PUT，参数相同。
 #   （方括号必须加引号，否则 zsh 会当 glob 报 no matches found。）
 #
 # ⚠️ gh-pages 是**生成物**分支，别在上面手写东西，每次都是 force push 覆盖。
