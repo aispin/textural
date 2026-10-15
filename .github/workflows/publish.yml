@@ -1,105 +1,80 @@
-# 打 tag（v1.0.0 这种）→ 校验 → 构建 → 发布 npm → 建 GitHub Release
+# 发布：release-please 依据 Conventional Commits 决定版本号，合并 Release PR 时才真正发出去
 #
-# 不发 NPM_TOKEN：走 npm Trusted Publishing（OIDC 短时凭证），仓库里没有长期密钥。
-# 依据 docs.npmjs.com/trusted-publishers：
-#   - npm CLI ≥ 11.5.1、Node ≥ 22.14.0 → 这里用 Node 24 并把 npm 升到最新，稳过版本线
-#   - 需要权限 `id-token: write`（仅 GitHub 托管 runner；self-hosted 不支持）
-#   - 公开仓库 + 公开包 → provenance 自动生成，**不用**加 --provenance
-#   - GitHub Actions 里 npm 会自动优先用 OIDC，所以**不要**设 NODE_AUTH_TOKEN
+# 流程：
+#   推 main（带 feat:/fix: 等）→ release-please 自动开/更新一个 Release PR
+#     （PR 里已经改好 package.json 的 version 与 CHANGELOG.md）
+#   → 你 review 并合并它 → 本次 workflow 打 tag、建 GitHub Release、npm publish
+#   docs: / chore: / ci: / style: / refactor: 这类 commit 不会触发发版。
 #
-# ⚠️ 配套设置（在 npmjs.com 上做一次，workflow 改不了它）：
-#   npmjs.com → 该包 → Settings → Trusted Publisher → GitHub
-#     Organization or user: aispin
-#     Repository:           textural
-#     Workflow filename:    publish.yml        （只写文件名，不要带路径）
-#     Allowed actions:      npm publish
-#   首次必须先用传统方式（token 或网页）把包发出去 —— 包还不存在时绑不了 Trusted Publisher。
-#   绑好之后建议在 Settings → Publishing access 选
-#   "Require two-factor authentication and disallow tokens"，再把用过的 Automation Token 撤掉。
+#   版本规则：feat: → minor ｜ fix: → patch ｜ feat!: 或 body 里写 BREAKING CHANGE: → major
 #
-# 发版动作只有一个：git tag v1.0.0 && git push origin v1.0.0
-# 版本号必须与 package.json 的 version 一致，否则第一步校验就拦下（不留半成品）。
-#
-# 想要人工闸门（最大安全）：npmjs.com 的 Allowed actions 只勾 `npm stage publish`，
-# 把下面的 `npm publish` 换成 `npm stage publish`，再由维护者用 2FA 批准：
-#   npm stage list / npm stage view / npm stage approve <id>   （npm CLI ≥ 11.15.0）
-# 注意：staged publishing 只能用于**已存在**的包，且批准必须过 2FA，CI 里批不了。
+# 认证：走 npm Trusted Publishing（OIDC），仓库里不需要任何令牌，provenance 自动生成。
+#   ⚠️ npmjs.com → @aifire/textural → Settings → Trusted Publisher 里绑定的 workflow 文件名
+#      必须仍是 **publish.yml**（这个名字是刻意保留的，改名要同步改 npm 上的配置）。
+#   ⚠️ 想给每次发版加人工闸门：Allowed actions 只勾 `npm stage publish`，
+#      再把下面的 `npm publish` 换成 `npm stage publish`，然后到 npmjs.com 的
+#      Staged Packages 页用 2FA 批准（staged publishing 只能用于已存在的包）。
+#   ⚠️ 绑好 Trusted Publisher 之前不要合并 Release PR：否则 tag 与 GitHub Release 会先建出来，
+#      而 npm publish 会因为拿不到凭证失败。
 
-name: Publish to npm
+name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write   # 建 GitHub Release
-  id-token: write   # OIDC：Trusted Publishing 的必需品
+  contents: write        # 打 tag、建 GitHub Release
+  pull-requests: write   # 开/更新 Release PR
+  id-token: write        # OIDC：Trusted Publishing 的必需品
 
 concurrency:
-  group: publish
+  group: release
   cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      # 1) 开/更新 Release PR；合并 Release PR 的那次运行会返回 release_created=true
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # 2) 只有真的要发版时，才构建并发布（非发版的推送在这里就结束了）
+      - if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          # 不传 cache：setup-node@v4 默认就不缓存，发布构建一律不开缓存
-          # 不传 registry-url：否则 setup-node 会往 .npmrc 写一行空的 ${NODE_AUTH_TOKEN}，
-          # 可能盖掉下面的 OIDC。仓库与 access 都由 package.json 的 publishConfig 提供。
+          # 不传 registry-url：避免 .npmrc 里出现空的 ${NODE_AUTH_TOKEN} 干扰 OIDC；
+          # registry 与 access 由 package.json 的 publishConfig 提供。
 
-      # Trusted Publishing 要 npm CLI ≥ 11.5.1（staged publishing 要 ≥ 11.15.0）；
-      # Node 自带的 npm 不保证够新，所以显式升级。
-      - name: Install latest npm
+      # Trusted Publishing 要 npm CLI ≥ 11.5.1，Node 自带的 npm 不保证够新。
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Install latest npm
         run: |
           npm install -g npm@latest
           node -v && npm -v
 
-      - name: Install dependencies
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Typecheck
         run: npm run typecheck
 
-      - name: Build
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Build
         run: npm run build
 
-      # tag 与 package.json 版本必须一致：不一致说明发错版本了，直接停手。
-      - name: Check tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          set -euo pipefail
-          tag="${GITHUB_REF_NAME#v}"
-          pkg="$(node -p "require('./package.json').version")"
-          echo "tag=$tag package.json=$pkg"
-          [ "$tag" = "$pkg" ] || { echo "::error::tag $GITHUB_REF_NAME 与 package.json $pkg 不一致"; exit 1; }
-
-      # 默认走 OIDC（npm CLI 在 GitHub Actions 里自动用它换临时凭证）。
-      # 只有首次发布需要 NPM_TOKEN：包还不存在时绑不了 Trusted Publisher。
-      # 绑好 Trusted Publisher 后把仓库里的 NPM_TOKEN secret 删掉，这里就自动变成纯 OIDC。
-      - name: Publish to npm
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          set -euo pipefail
-          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
-          if [ -n "${NPM_TOKEN:-}" ]; then
-            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" >> "$npmrc"
-            echo "NPM_TOKEN 已配置 → 首次发布走 token（OIDC 优先，未绑定 Trusted Publisher 时回落）"
-          else
-            echo "未配置 NPM_TOKEN → 走 OIDC Trusted Publishing"
-          fi
-          npm publish
-
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
+      # 不传 NODE_AUTH_TOKEN：npm CLI 在 GitHub Actions 里自动用 OIDC 换临时凭证。
+      - if: ${{ steps.release.outputs.release_created }}
+        name: Publish to npm
+        run: npm publish
