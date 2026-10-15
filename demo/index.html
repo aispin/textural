@@ -28,6 +28,7 @@
   --fg-mute:   #8b94a7;
   --line:      rgba(20,30,60,.09);
   --line-hi:   rgba(20,30,60,.16);
+  --card-line: rgba(20,30,60,.10);
   --accent:    #4f6bff;
   --accent-2:  #a678ff;
   --panel:     rgba(20,30,60,.028);
@@ -52,6 +53,7 @@
   --fg-mute:   #6b7488;
   --line:      rgba(255,255,255,.09);
   --line-hi:   rgba(255,255,255,.18);
+  --card-line: rgba(255,255,255,.055);
   --accent:    #8ba3ff;
   --accent-2:  #c39bff;
   --panel:     rgba(255,255,255,.038);
@@ -262,7 +264,7 @@ img,svg,canvas{display:block}
   position:relative;
   aspect-ratio: 1 / 1;
   border-radius: 16px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   overflow:hidden;
   isolation:isolate;
   box-shadow: var(--shadow-sm);
@@ -274,6 +276,7 @@ img,svg,canvas{display:block}
 .show-card:hover{
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
+  border-color: var(--line);   /* 只有悬停才提亮，平时保持克制 */
 }
 .show-card:focus-visible{
   border-color: var(--accent);
@@ -284,7 +287,9 @@ img,svg,canvas{display:block}
   z-index:3;
   height:100%;
   padding: 20px 22px;
-  display:flex;flex-direction:column;justify-content:space-between;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;
+  text-align:center;
   pointer-events:none;
 }
 .show-num{
@@ -300,23 +305,6 @@ img,svg,canvas{display:block}
   text-transform:uppercase;
   font-weight:700;
   opacity:.55;
-}
-.show-edit-hint{
-  position:absolute;
-  bottom:14px;right:16px;
-  font-size:9.5px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  font-weight:700;
-  opacity:0;
-  transition: opacity .25s;
-  padding:3px 7px;
-  border-radius:999px;
-  border:1px solid currentColor;
-}
-.show-card:hover .show-edit-hint,
-.show-card:focus-visible .show-edit-hint{
-  opacity:.5;
 }
 
 /* ==========================================================================
@@ -825,40 +813,8 @@ input[type=range]::-moz-range-thumb{
 /* ==========================================================================
    Agents — SKILL.md
    ========================================================================== */
-.agent-grid{
-  display:grid;
-  gap:18px;
-  margin-top:34px;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-}
-.agent-card{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  padding:20px;
-  border:1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elev);
-  box-shadow: var(--shadow-sm);
-}
-.agent-card-h{ display:flex;align-items:center;justify-content:space-between;gap:10px }
-.agent-name{ font-weight:800;letter-spacing:-.01em;font-size:15px }
-.agent-scope{
-  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
-  color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
-  padding:4px 8px;border-radius:999px;
-}
-.agent-card pre{
-  margin:0;padding:14px 16px;
-  border-radius: var(--radius-md);
-  background: var(--code-bg);color: var(--code-fg);
-  overflow-x:auto;white-space:pre;
-  font-size:12.5px;line-height:1.7;
-}
-.agent-note{ margin:0;font-size:13px;line-height:1.65;color:var(--fg-dim) }
 .agent-prompt{
-  margin-top:18px;
+  margin-top:34px;
   border:1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--bg-elev);
@@ -891,12 +847,13 @@ input[type=range]::-moz-range-thumb{
   overflow-x:auto;white-space:pre-wrap;
   font-size:13px;line-height:1.75;
 }
-.agent-links{
-  display:flex;flex-wrap:wrap;gap:18px;
-  padding:14px 18px;
-  font-size:13px;font-weight:600;
+.agent-hint{
+  margin:0;
+  padding:14px 18px 16px;
+  border-top:1px solid var(--line);
+  font-size:13px;line-height:1.65;
+  color: var(--fg-dim);
 }
-.agent-links a{ color: var(--accent) }
 .nav-links a.nav-gh path{ fill: currentColor }
 .nav-links a.nav-gh{
   display:flex;align-items:center;gap:7px;
@@ -939,7 +896,6 @@ footer{
     border-right:0;border-bottom:1px solid var(--line);
   }
   .drawer-rail{ width:100%;flex:1 }
-  .agent-grid{ grid-template-columns: 1fr }
   .docs-layout{ grid-template-columns: 1fr }
   .docs-code-panel{ position: static }
   .hero-showcase{ grid-template-columns: repeat(2, minmax(0,1fr)); padding: 32px 20px 20px }
@@ -1154,54 +1110,13 @@ const png = bg.toDataURL();</code></pre>
       </p>
     </div>
 
-    <div class="agent-grid reveal">
-      <div class="agent-card">
-        <div class="agent-card-h">
-          <span class="agent-name">Claude Code</span>
-          <span class="agent-scope" data-i18n="agent.scope.project">项目级</span>
-        </div>
-<pre><code>mkdir -p .claude/skills/textural
-curl -o .claude/skills/textural/SKILL.md \
-  https://raw.githubusercontent.com/aispin/textural/main/SKILL.md</code></pre>
-        <p class="agent-note" data-i18n="agent.note.claude">装好后用 /textural 直接唤起，也可以只描述需求，让它按 description 自动匹配；想全局生效就放 ~/.claude/skills/。</p>
-      </div>
-
-      <div class="agent-card">
-        <div class="agent-card-h">
-          <span class="agent-name">Codex</span>
-          <span class="agent-scope" data-i18n="agent.scope.project">项目级</span>
-        </div>
-<pre><code>mkdir -p .agents/skills/textural
-curl -o .agents/skills/textural/SKILL.md \
-  https://raw.githubusercontent.com/aispin/textural/main/SKILL.md</code></pre>
-        <p class="agent-note" data-i18n="agent.note.codex">Codex 会从工作目录一路扫到仓库根的 .agents/skills；会话里用 /skills 或输入 $ 唤起。个人级放 ~/.agents/skills/。</p>
-      </div>
-
-      <div class="agent-card">
-        <div class="agent-card-h">
-          <span class="agent-name" data-i18n="agent.name.other">其它助手 / 不想装文件</span>
-          <span class="agent-scope" data-i18n="agent.scope.adhoc">临时</span>
-        </div>
-<pre><code># 规则文件：.cursor/rules/textural.mdc
-#           AGENTS.md · CLAUDE.md
-# 最省事：把正文贴进对话
-https://github.com/aispin/textural/blob/main/SKILL.md</code></pre>
-        <p class="agent-note" data-i18n="agent.note.other">SKILL.md 就是一份普通 Markdown：贴进聊天窗口，或写进项目的 AGENTS.md / CLAUDE.md 都成立。</p>
-      </div>
-    </div>
-
     <div class="agent-prompt reveal">
       <div class="agent-prompt-h">
-        <span data-i18n="agent.prompt.title">一段可以直接粘贴的提示词</span>
+        <span data-i18n="agent.prompt.title">一句话让 Agent 自己装</span>
         <button id="agent-copy" data-i18n="agent.copy">复制</button>
       </div>
-      <pre><code id="agent-prompt-code" data-i18n="agent.prompt.code">用 @aifire/textural 给 #hero 加文字底纹：text 用「抵达」，mode 用 hero，blur 0.5、intensity 0.45，theme 跟随页面明暗。
-容器已有尺寸，记得在组件卸载时 destroy()。参数拿不准就参考 SKILL.md 的选项表。</code></pre>
-      <div class="agent-links">
-        <a href="https://github.com/aispin/textural/blob/main/SKILL.md" target="_blank" rel="noopener" data-i18n="agent.link.skill">查看 SKILL.md 原文 →</a>
-        <a href="https://github.com/aispin/textural" target="_blank" rel="noopener" data-i18n="agent.link.repo">GitHub 仓库 →</a>
-        <a href="https://www.npmjs.com/package/@aifire/textural" target="_blank" rel="noopener" data-i18n="agent.link.npm">npm 页面 →</a>
-      </div>
+      <pre><code id="agent-prompt-code" data-i18n="agent.prompt.code">请帮我安装 https://github.com/aispin/textural/blob/main/SKILL.md，并且告诉我怎么用。</code></pre>
+      <p class="agent-hint" data-i18n="agent.hint">把这句话直接发给你的编码助手（Claude Code / Codex / Cursor 都行）：它会读那份 SKILL.md，装进自己的技能目录，然后照里面的约定用 Textural。</p>
     </div>
   </div>
 </section>
@@ -1388,7 +1303,6 @@ const I18N = {
     'show.backend.label': '渲染后端',
     'show.license.num': 'MIT',
     'show.license.label': '开源协议',
-    'show.hint': '编辑',
 
     'docs.eyebrow': 'Getting Started & API',
     'docs.title': '接入与配置',
@@ -1414,20 +1328,13 @@ const I18N = {
 
     'agent.eyebrow': 'For coding agents',
     'agent.title': '让 Agent 自己会用 Textural',
-    'agent.subtitle': '仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、以及改完代码要跑的自检命令。把它放进助手读取的位置，之后你在聊天窗口里说一句需求就够了。',
-    'agent.scope.project': '项目级',
-    'agent.scope.adhoc': '临时',
-    'agent.name.other': '其它助手 / 不想装文件',
-    'agent.note.claude': '装好后用 /textural 直接唤起，也可以只描述需求，让它按 description 自动匹配；想全局生效就放 ~/.claude/skills/。',
-    'agent.note.codex': 'Codex 会从工作目录一路扫到仓库根的 .agents/skills；会话里用 /skills 或输入 $ 唤起。个人级放 ~/.agents/skills/。',
-    'agent.note.other': 'SKILL.md 就是一份普通 Markdown：贴进聊天窗口，或写进项目的 AGENTS.md / CLAUDE.md 都成立。',
-    'agent.prompt.title': '一段可以直接粘贴的提示词',
-    'agent.prompt.code': '用 @aifire/textural 给 #hero 加文字底纹：text 用「抵达」，mode 用 hero，blur 0.5、intensity 0.45，theme 跟随页面明暗。\n容器已有尺寸，记得在组件卸载时 destroy()。参数拿不准就参考 SKILL.md 的选项表。',
+    'agent.subtitle': '仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、改完代码要跑的自检命令。不用手动安装——把下面这句话发给你的 Agent 就行。',
+    'agent.prompt.title': '一句话让 Agent 自己装',
+    'agent.prompt.code': '请帮我安装 https://github.com/aispin/textural/blob/main/SKILL.md，并且告诉我怎么用。',
     'agent.copy': '复制',
     'agent.copied': '已复制',
-    'agent.link.skill': '查看 SKILL.md 原文 →',
-    'agent.link.repo': 'GitHub 仓库 →',
-    'agent.link.npm': 'npm 页面 →',
+
+    'agent.hint': '把这句话直接发给你的编码助手（Claude Code / Codex / Cursor 都行）：它会读那份 SKILL.md，装进自己的技能目录，然后照里面的约定用 Textural。',
 
     'footer.tagline': '让每一个卡片都有质感',
     'footer.docs': '文档',
@@ -1484,7 +1391,6 @@ const I18N = {
     'show.backend.label': 'render backends',
     'show.license.num': 'MIT',
     'show.license.label': 'license',
-    'show.hint': 'Edit',
 
     'docs.eyebrow': 'Getting Started & API',
     'docs.title': 'Docs & Configuration',
@@ -1510,20 +1416,13 @@ const I18N = {
 
     'agent.eyebrow': 'For coding agents',
     'agent.title': 'Let your agent drive Textural',
-    'agent.subtitle': 'SKILL.md at the repo root is the contract for coding agents: when to reach for this library, the minimal call, every option, six pitfalls that really bite, and the checks to run after an edit. Drop it where your assistant looks, and a one-line request in chat is enough.',
-    'agent.scope.project': 'project',
-    'agent.scope.adhoc': 'on demand',
-    'agent.name.other': 'Other agents / no install',
-    'agent.note.claude': 'Then invoke it with /textural, or just describe the task and let the description match; use ~/.claude/skills/ for every project.',
-    'agent.note.codex': 'Codex scans .agents/skills from your working directory up to the repo root; type /skills or $ in a session. Use ~/.agents/skills/ for every project.',
-    'agent.note.other': 'SKILL.md is plain Markdown: paste it into the chat, or into an AGENTS.md / CLAUDE.md in your project.',
-    'agent.prompt.title': 'A prompt you can paste right away',
-    'agent.prompt.code': 'Add a text texture to #hero with @aifire/textural: text "arrival", mode hero, blur 0.5, intensity 0.45, theme follows the page.\nThe container already has a size — call destroy() when the component unmounts. Check the option table in SKILL.md if unsure.',
+    'agent.subtitle': 'SKILL.md at the repo root is the contract for coding agents: when to reach for this library, the minimal call, every option, six pitfalls that really bite, and the checks to run after an edit. No manual install — just hand your agent the line below.',
+    'agent.prompt.title': 'One line, and your agent installs it',
+    'agent.prompt.code': 'Please install https://github.com/aispin/textural/blob/main/SKILL.md for me, and then tell me how to use it.',
     'agent.copy': 'Copy',
     'agent.copied': 'Copied',
-    'agent.link.skill': 'Read SKILL.md →',
-    'agent.link.repo': 'GitHub repo →',
-    'agent.link.npm': 'npm page →',
+
+    'agent.hint': 'Paste that line into your coding agent (Claude Code, Codex, Cursor — any of them): it reads that SKILL.md, installs it into its own skills directory, and then follows the conventions inside.',
 
     'footer.tagline': 'Give every card a soul',
     'footer.docs': 'Docs',
@@ -1597,8 +1496,6 @@ function applyI18n(){
   $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   $('#lang-current').textContent = t('lang.current');
   $('#lang-other').textContent = t('lang.other');
-  // 卡片的 edit hint
-  $$('.show-edit-hint').forEach(el => { el.textContent = t('show.hint'); });
 }
 
 /* -------------------- WordBG / Textural 实例池 -------------------- */
@@ -1661,7 +1558,6 @@ function buildShowcase(){
         <div class="show-num">${cfg.num[lang]}</div>
         <div class="show-label">${cfg.label[lang]}</div>
       </div>
-      <span class="show-edit-hint">${t('show.hint')}</span>
     `;
 
     const bg = track(new Textural(el, {
@@ -1685,10 +1581,8 @@ function refreshShowcaseText(){
     if(!el) return;
     const num   = el.querySelector('.show-num');
     const label = el.querySelector('.show-label');
-    const hint  = el.querySelector('.show-edit-hint');
     if(num)   num.textContent   = cfg.num[lang];
     if(label) label.textContent = cfg.label[lang];
-    if(hint)  hint.textContent  = t('show.hint');
   });
 }
 
