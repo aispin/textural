@@ -51,7 +51,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          package-manager-cache: false   # 发布构建一律不开缓存
+          # 不传 cache：setup-node@v4 默认就不缓存，发布构建一律不开缓存
           # 不传 registry-url：否则 setup-node 会往 .npmrc 写一行空的 ${NODE_AUTH_TOKEN}，
           # 可能盖掉下面的 OIDC。仓库与 access 都由 package.json 的 publishConfig 提供。
 
