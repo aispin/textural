@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/aispin/textural/compare/v1.2.0...v1.3.0) (2026-10-15)
+
+
+### Features
+
+* 支持导出矢量 SVG ([bcd981e](https://github.com/aispin/textural/commit/bcd981ee5513a0a1074990749970c78db4e5b8f1))
+
 ## [1.2.0](https://github.com/aispin/textural/compare/v1.1.0...v1.2.0) (2026-10-15)
 
 
