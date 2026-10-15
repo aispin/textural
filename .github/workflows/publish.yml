@@ -1,24 +1,28 @@
-# 发布：release-please 依据 Conventional Commits 决定版本号，然后直接发版（不开 Release PR）。
+# 发布：release-please 算版本 → 合并 Release PR → 打 tag、建 GitHub Release、npm publish
 #
-# 推 main → 分析提交 → 有 feat/fix 就：打 tag、建 GitHub Release、npm publish
-#   fix: → patch ｜ feat: → minor ｜ feat!: 或 body 里写 BREAKING CHANGE: → major
-#   docs: / chore: / ci: / style: / refactor: → 不发版
+# 推 main（带 feat/fix 等）→ release-please 开/更新一个 Release PR（里面已改好
+#   package.json 的 version、CHANGELOG.md、.release-please-manifest.json）
+# → **你合并这个 PR** → 本次 workflow 在合并后的推送里完成 tag + Release + npm 发布
+#   docs:/chore:/ci:/style:/refactor: 不触发发版。
+#   版本规则：feat: → minor ｜ fix: → patch ｜ feat!: 或 body 里写 BREAKING CHANGE: → major
 #
-# 为什么不开 Release PR（试过，两条死路）：
-#   1) 让 release-please 开 PR + 挂 GitHub 原生 auto-merge：auto-merge 要求目标分支配了
-#      分支保护规则，否则报 "Protected branch rules not configured for this branch"。
-#   2) 退回「workflow 里用 gh pr merge 合并」：GITHUB_TOKEN 合并产生的 push 不触发下游
-#      workflow（防递归），而且**workflow 无法再给这次合并创建 Release**
-#      （实测 403 Resource not accessible by integration，而 token 权限确实是 contents: write）。
-#   所以这里用 `skip-github-pull-request: true`：不开 PR，直接建 tag + Release。
-#   需要人工闸门时：把 npmjs.com 的 Allowed actions 改成只允许 `npm stage publish`，
-#   再把下面的 `npm publish` 换成 `npm stage publish`，之后每版都要维护者过 2FA 批准。
+# ⚠️ 为什么保留「合并」这一次人工点击 —— 两条全自动路线都实测被 GitHub 挡住：
+#   1) 挂 GitHub 原生 auto-merge：仓库没有分支保护规则，直接报
+#      "Protected branch rules not configured for this branch"。
+#   2) 由 workflow 用 GITHUB_TOKEN 合并：这种 push 不触发下游 workflow（防递归），
+#      而且这个 workflow 无法再给那次合并创建 Release
+#      （403 Resource not accessible by integration，而 token 权限确实是 contents: write）。
+#   注：`skip-github-pull-request: true` 也不行 —— 那个模式只负责「收尾已合并的 Release PR」，
+#   不会从裸提交直接发版（实测它永远判定"没有可发版本"）。
+#   想连这一次点击都省掉：给仓库配一个 PAT 或 GitHub App token 来合并（需要长期凭证，谨慎）。
 #
 # 认证：npm Trusted Publishing（OIDC），仓库里没有任何令牌，provenance 自动生成。
 #   ⚠️ npmjs.com → @aifire/textural → Settings → Trusted Publisher 绑定的 workflow 文件名
 #      必须仍是 **publish.yml**。
+#   想给每次发版加人工闸门：Allowed actions 只勾 `npm stage publish`，
+#   再把下面的 `npm publish` 换成 `npm stage publish`，然后去 npmjs.com 过 2FA。
 #
-# 手动补发（比如某次 tag 建好了但 npm publish 失败）：Actions → Release → Run workflow，
+# 手动补发（tag 建好了但 npm 发布失败）：Actions → Release → Run workflow，
 # 勾上 publish_current_version，会按 package.json 当前版本重新构建并发布。
 
 name: Release
@@ -34,8 +38,9 @@ on:
         default: false
 
 permissions:
-  contents: write   # 打 tag、建 GitHub Release
-  id-token: write   # OIDC：Trusted Publishing 的必需品
+  contents: write        # 打 tag、建 GitHub Release
+  pull-requests: write   # 开/更新 Release PR
+  id-token: write        # OIDC：Trusted Publishing 的必需品
 
 concurrency:
   group: release
@@ -47,12 +52,12 @@ jobs:
     outputs:
       publish: ${{ steps.flag.outputs.publish }}
     steps:
+      # 合并 Release PR 的那次运行会返回 release_created=true
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          skip-github-pull-request: true
 
       - id: flag
         name: Decide whether to publish

@@ -173,7 +173,7 @@ npm run build:site  # 组装 site/（demo + IIFE）本地看效果
 
 ## 发版
 
-版本号从不手动改。每次推 `main` 都会跑 [`publish.yml`](./.github/workflows/publish.yml)，依据 [Conventional Commits](https://www.conventionalcommits.org/) 推导下一个版本，并在**同一次运行里**完成发布：
+版本号从不手动改，由 [release-please](https://github.com/googleapis/release-please) 依据 [Conventional Commits](https://www.conventionalcommits.org/) 推导：
 
 | commit | 结果 |
 | --- | --- |
@@ -182,13 +182,26 @@ npm run build:site  # 组装 site/（demo + IIFE）本地看效果
 | `feat!: …`，或 body 里写 `BREAKING CHANGE:` | major |
 | `docs:` / `chore:` / `ci:` / `style:` / `refactor:` / `test:` | 不发版 |
 
-这次运行会打 tag、建 GitHub Release，然后把包发到 npm —— 认证走 npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC），仓库里不存任何令牌，provenance 自动生成。npm 侧只需配置一次：包 → Settings → Trusted Publisher → GitHub，填 `Organization or user: aispin`、`Repository: textural`、`Workflow filename: publish.yml`、`Allowed actions: npm publish`。
+每次推 `main` 都会跑 [`publish.yml`](./.github/workflows/publish.yml)：
 
-**不开 Release PR**。这条路先试过，两种写法都被墙挡住：GitHub 不允许在没有分支保护规则的分支上启用 auto-merge；而用 workflow 的 `GITHUB_TOKEN` 做的合并，既不会触发后续 workflow，也不允许这个 workflow 再给那次合并建 Release。改用 `skip-github-pull-request: true` 直接发版，绕开全部问题。
+1. release-please 开（或更新）一个 **Release PR**，里面已经把 `package.json` 版本号、`CHANGELOG.md` 条目和 manifest 改好；
+2. 你 review 之后点 **Merge**；
+3. 这次运行接着打 tag、建 GitHub Release、发 npm —— 认证走 npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC），仓库里不存任何令牌，provenance 自动生成。
 
-想要人工闸门：Trusted Publisher 只勾 `npm stage publish`，把 workflow 里的 `npm publish` 换成 `npm stage publish`，之后每版都在 npmjs.com 上过一遍 2FA。
+npm 侧只需配置一次：包 → Settings → Trusted Publisher → GitHub，填 `Organization or user: aispin`、`Repository: textural`、`Workflow filename: publish.yml`、`Allowed actions: npm publish`。
 
-如果 tag 建好了但 npm 发布失败：Actions → Release → Run workflow，勾上 `publish_current_version`，它会按 `package.json` 当前版本重新构建并发布。
+### 为什么还留着这一次「合并」点击
+
+试过把它去掉，两条自动化路线都被 GitHub 挡住：
+
+1. **GitHub 原生 auto-merge**：没有分支保护规则的分支不允许启用，报 `Protected branch rules not configured for this branch`；
+2. **workflow 用 `GITHUB_TOKEN` 自己合并**：这种 push 不触发下游 workflow（防递归），而且同一个 workflow 无法再给它创建 Release —— `403 Resource not accessible by integration`，而 token 权限确实是 `contents: write`。
+
+`skip-github-pull-request: true` 也不是出路：那个模式只负责"收尾已合并的 Release PR"，不会从裸提交直接发版（实测它永远判定"没有可发版本"）。
+
+想彻底零点击：给仓库配一个 PAT 或 GitHub App token 来执行合并（属于长期凭证，请自行权衡），或者把 Trusted Publisher 设置成只允许 `npm stage publish`、每次发版去 npmjs.com 手工过 2FA。
+
+如果 tag 建好了但 npm 发布失败：Actions → Release → Run workflow，勾上 `publish_current_version` 重新构建并发布。
 
 
 ## 开发
