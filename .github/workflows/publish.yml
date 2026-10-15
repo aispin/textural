@@ -44,6 +44,24 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      # 让 Release PR 自己合：一开出来就挂上 GitHub 原生 auto-merge，
+      # 必需检查通过（本仓库没配必需检查，等于立刻）后自动合入 → 全自动发版。
+      # 想恢复人工闸门：删掉这一步（或把仓库设置里的 Allow auto-merge 关掉）。
+      - name: Enable auto-merge on the release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" \
+                  --label "autorelease: pending" --state open \
+                  --json number --jq '.[0].number // empty')"
+          if [ -n "$pr" ]; then
+            gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --merge --auto
+            echo "已为 Release PR #$pr 开启自动合并"
+          else
+            echo "本次没有待处理的 Release PR"
+          fi
+
       # 2) 只有真的要发版时，才构建并发布（非发版的推送在这里就结束了）
       - if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v4
