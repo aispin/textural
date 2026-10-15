@@ -49,12 +49,22 @@ for (const file of ['dist/index.js', 'dist/textural.iife.min.js']) {
 if (withSite) {
   rmSync(at('site'), { recursive: true, force: true });
   mkdirSync(at('site'), { recursive: true });
-  copyFileSync(at('demo/index.html'), at('site/index.html'));
+
+  // 落地页顶部的版本号从 package.json 注入，避免手写死：
+  // （site/ 是部署产物，改这里的源码才能生效 —— 所以改完要重跑本命令）
+  const { version } = JSON.parse(readFileSync(at('package.json'), 'utf8'));
+  const html = readFileSync(at('demo/index.html'), 'utf8');
+  const versionTag = /(<span class="pill" id="hero-version">)[^<]*(<\/span>)/;
+  // 只校验「占位符在不在」：注入值正好等于占位符（版本没变）也是合法情况
+  if (!versionTag.test(html)) throw new Error('注入版本号失败：demo/index.html 里找不到 #hero-version');
+  const stamped = html.replace(versionTag, (_m, open, close) => `${open}v${version}${close}`);
+  writeFileSync(at('site/index.html'), stamped);
+
   copyFileSync(at('dist/textural.iife.min.js'), at('site/textural.js'));
   // PWA：manifest / service worker 必须在站点根，静态资源放 assets/
   copyFileSync(at('demo/manifest.webmanifest'), at('site/manifest.webmanifest'));
   copyFileSync(at('demo/sw.js'), at('site/sw.js'));
   cpSync(at('demo/assets'), at('site/assets'), { recursive: true });
   writeFileSync(at('site/.nojekyll'), '');
-  console.log('site/ 已组装（index.html + textural.js + PWA 资源）');
+  console.log(`site/ 已组装（index.html + textural.js + PWA 资源，版本号 v${version}）`);
 }
