@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Textural — 把文字变成卡片背景</title>
-<meta name="description" content="Textural 是一个 4.8KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
+<meta name="description" content="Textural 是一个 5.8KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
 <meta name="theme-color" content="#4f6bff" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#090b10" media="(prefers-color-scheme: dark)" />
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
@@ -576,8 +576,10 @@ img,svg,canvas{display:block}
   transition: background-color .18s, color .18s;
 }
 .mini-btn:hover{ background: var(--panel-hi); color: var(--fg) }
+.preview-actions{ display:flex;align-items:center;gap:10px;flex-wrap:wrap }
 #pg-download{ font-size:12.5px; padding:9px 14px }
-#pg-download .out-size{
+#pg-download-svg{ font-size:12.5px; padding:9px 14px }
+.preview-actions .out-size{
   font-family: var(--font-mono);
   font-size:11px;
   font-weight:600;
@@ -969,7 +971,7 @@ footer{
         <span class="badge">
           <!-- 版本号由构建时注入（scripts/build.mjs --site 读 package.json 的 version） -->
           <span class="pill" id="hero-version">v1.0.0</span>
-          <span data-i18n="hero.badge.text">零依赖 · 4.8KB gzip</span>
+          <span data-i18n="hero.badge.text">零依赖 · 5.8KB gzip</span>
         </span>
         <h1>
           <span data-i18n="hero.title.1">把文字</span>
@@ -1181,11 +1183,16 @@ const png = bg.toDataURL();</code></pre>
           </label>
           <button class="mini-btn" id="pg-size-src" data-i18n="drawer.sourceSize">源尺寸</button>
         </div>
-        <button class="btn btn-primary" id="pg-download">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 12l5 5 5-5M4 20h16"/></svg>
-          <span data-i18n="drawer.download">下载 PNG</span>
+        <div class="preview-actions">
+          <button class="btn btn-primary" id="pg-download">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 12l5 5 5-5M4 20h16"/></svg>
+            <span data-i18n="drawer.download">下载 PNG</span>
+          </button>
+          <button class="btn btn-ghost" id="pg-download-svg">
+            <span data-i18n="drawer.downloadSvg">下载 SVG</span>
+          </button>
           <span class="out-size" id="pg-out-size">1180 × 520</span>
-        </button>
+        </div>
       </div>
       <p class="preview-hint" data-i18n="drawer.previewHint">
         左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览和导出的 PNG。
@@ -1291,14 +1298,14 @@ const I18N = {
     'nav.docs': '接入与配置',
     'nav.agents': 'Agent 接入',
 
-    'hero.badge.text': '零依赖 · 4.8KB gzip',
+    'hero.badge.text': '零依赖 · 5.8KB gzip',
     'hero.title.1': '把文字',
     'hero.title.2': '变成卡片背景',
     'hero.subtitle': '输入任意字或词，生成柔和、不抢镜的卡片底纹。Canvas + SVG + GLSL 三层渲染，支持高斯模糊、色彩流动、胶片颗粒。',
     'hero.cta.playground': 'Playground',
     'hero.cta.docs': '接入与配置',
 
-    'show.size.num': '4.8KB',
+    'show.size.num': '5.8KB',
     'show.size.label': 'gzip 体积',
     'show.dep.num': '0',
     'show.dep.label': '运行时依赖',
@@ -1367,7 +1374,8 @@ const I18N = {
     'drawer.height': '高',
     'drawer.sourceSize': '源尺寸',
     'drawer.download': '下载 PNG',
-    'drawer.previewHint': '左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览和导出的 PNG。',
+    'drawer.downloadSvg': '下载 SVG',
+    'drawer.previewHint': '左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览与导出的文件。SVG 是矢量版（文字可编辑），不含 WebGL 的颗粒噪声。',
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
 
@@ -1378,14 +1386,14 @@ const I18N = {
     'nav.docs': 'Docs & API',
     'nav.agents': 'For agents',
 
-    'hero.badge.text': 'Zero deps · 4.8KB gzipped',
+    'hero.badge.text': 'Zero deps · 5.8KB gzipped',
     'hero.title.1': 'Turn text into',
     'hero.title.2': 'card backgrounds',
     'hero.subtitle': 'Type any word and get a soft, unobtrusive card texture. Rendered by Canvas + SVG + GLSL with gaussian blur, color flow, and film grain.',
     'hero.cta.playground': 'Playground',
     'hero.cta.docs': 'Docs & API',
 
-    'show.size.num': '4.8KB',
+    'show.size.num': '5.8KB',
     'show.size.label': 'gzipped',
     'show.dep.num': '0',
     'show.dep.label': 'runtime deps',
@@ -1454,7 +1462,8 @@ const I18N = {
     'drawer.height': 'H',
     'drawer.sourceSize': 'Source size',
     'drawer.download': 'Download PNG',
-    'drawer.previewHint': 'This left pane is a live copy of the source background: parameter changes sync to the source, width/height only affect the preview and the exported PNG.',
+    'drawer.downloadSvg': 'Download SVG',
+    'drawer.previewHint': 'This left pane is a live copy of the source background: parameter changes sync to the source, width/height only affect the preview and the exported files. The SVG is vector (editable text) and has no WebGL grain.',
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
 
@@ -1520,7 +1529,7 @@ let heroBg = null;
 /* -------------------- 4 张示例卡片 -------------------- */
 const DEMO_CONFIGS = {
   size: {
-    num: { zh: '4.8KB', en: '4.8KB' },
+    num: { zh: '5.8KB', en: '5.8KB' },
     label: { zh: 'gzip 体积', en: 'gzipped' },
     bg: { text:'轻', mode:'tile', hue:222, blur:0.35, intensity:0.55, scale:1.05, grain:0.55 }
   },
@@ -1750,6 +1759,19 @@ function resetSizeToSource(){
   applySizeInputs(true);
 }
 
+function exportFileName(ext){
+  return `textural-${String(drawerState.text || 'bg').trim()}-${exportSize.w}x${exportSize.h}.${ext}`;
+}
+
+function triggerDownload(href, filename){
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 function downloadPNG(){
   const { w, h } = exportSize;
   const holder = document.createElement('div');
@@ -1760,16 +1782,17 @@ function downloadPNG(){
   try{
     // dprMax:1 → 画布 = W×H 像素，导出的 PNG 就是 W×H 原图
     offscreen = new Textural(holder, { ...getTargetBg().opts, dprMax: 1, animate: false });
-    const a = document.createElement('a');
-    a.href = offscreen.toDataURL();
-    a.download = `textural-${String(drawerState.text || 'bg').trim()}-${w}x${h}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    triggerDownload(offscreen.toDataURL(), exportFileName('png'));
   } finally {
     if(offscreen) offscreen.destroy();
     holder.remove();
   }
+}
+
+// SVG 直接按目标尺寸生成，不需要离屏实例
+function downloadSVG(){
+  const svg = getTargetBg().toSVG(exportSize.w, exportSize.h);
+  triggerDownload('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), exportFileName('svg'));
 }
 
 function bindPreviewControls(){
@@ -1785,6 +1808,7 @@ function bindPreviewControls(){
   hInput.addEventListener('change', () => applySizeInputs(true));
   $('#pg-size-src').addEventListener('click', resetSizeToSource);
   $('#pg-download').addEventListener('click', downloadPNG);
+  $('#pg-download-svg').addEventListener('click', downloadSVG);
   window.addEventListener('resize', () => { if(previewBg) layoutPreview(); });
 }
 

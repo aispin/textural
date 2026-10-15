@@ -630,6 +630,108 @@ export class Textural {
     return this.canvas!.toDataURL('image/png');
   }
 
+  /**
+   * 导出**矢量** SVG（底色渐变 + 文字 + 模糊 + 暗角）。
+   *
+   * 与 `toDataURL()` 的差别：SVG 走的是同一套画布参数，但不含 WebGL 合成那一步
+   * （fbm 扭曲、极光噪声、逐像素颗粒 —— 这些都是逐像素算的，矢量里没有等价物），
+   * 所以两者观感接近、并非逐像素相同；
+   * 换来的是文字仍是可编辑的 `<text>`，能直接丢进 Figma / Illustrator 改。
+   *
+   * @param width  画布宽度（默认取容器当前宽度）
+   * @param height 画布高度（默认取容器当前高度）
+   */
+  toSVG(width?: number, height?: number): string {
+    const w = Math.max(1, Math.round(width ?? this._w));
+    const h = Math.max(1, Math.round(height ?? this._h));
+    const o = this.opts;
+    const light = this.theme === 'light';
+    const hue = this.hue;
+    const rnd = mulberry32(this.seed);            // 与 _renderBase 同序消费随机数
+    const n = (v: number) => (Math.round(v * 100) / 100).toString();
+    const esc = (s: string) => s
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    // 1) 底色 + 五层径向渐变（参数与 _drawBackground 逐项一致）
+    let defs = '';
+    let body = `<rect width="${w}" height="${h}" fill="hsl(${hue},${light ? 26 : 22}%,${light ? 98 : 7}%)"/>`;
+    for(let i=0;i<5;i++){
+      const cx = rnd()*w, cy = rnd()*h;
+      const r = Math.max(w,h) * (0.32 + rnd()*0.55);
+      const hh = hue + (rnd()-0.5)*100;
+      const l = light ? 80 + rnd()*14 : 11 + rnd()*15;
+      const sat = light ? 62 : 52;
+      const a = light ? 0.5 : 0.55;
+      defs += `<radialGradient id="tbg${i}" gradientUnits="userSpaceOnUse" cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}">` +
+        `<stop offset="0" stop-color="hsl(${n(hh)},${sat}%,${n(l)}%)" stop-opacity="${a}"/>` +
+        `<stop offset="1" stop-color="hsl(${n(hh)},${sat}%,${n(l)}%)" stop-opacity="0"/></radialGradient>`;
+      body += `<rect width="${w}" height="${h}" fill="url(#tbg${i})"/>`;
+    }
+
+    // 2) 文字层（几何与 _drawTextLayer 一致；measureText 需要真实 canvas）
+    const raw = String(o.text || '').replace(/\s+/g, ' ').trim();
+    const text = raw.slice(0, 12);
+    const radius = this._blurRadiusFor(w, h);
+    let textLayer = '';
+    if(text){
+      const minSide = Math.min(w, h);
+      const fontSize = Math.max(12, (minSide/9) * o.scale);
+      const alpha = Math.max(0, Math.min(0.32, (light ? 0.058 : 0.072) * (o.intensity / 0.6)));
+      const fill = light ? `hsl(${hue},34%,20%)` : `hsl(${hue},26%,92%)`;
+      const font = `font-family="${esc(o.fontFamily)}" font-weight="${o.fontWeight}" fill="${fill}" text-anchor="middle" dominant-baseline="central"`;
+
+      if(o.mode === 'hero'){
+        const size = (minSide / Math.max(text.length, 1)) * 1.05 * o.scale;
+        textLayer = `<text x="${n(w/2)}" y="${n(h*0.53)}" ${font} font-size="${n(size)}" ` +
+          `fill-opacity="${n(Math.min(0.16, alpha * 1.25))}">${esc(text)}</text>`;
+      } else {
+        const probe = document.createElement('canvas').getContext('2d')!;
+        probe.font = `${o.fontWeight} ${fontSize}px ${o.fontFamily}`;
+        const tw = Math.max(probe.measureText(text).width, fontSize*0.6);
+        const gapX = tw * 2.05;
+        const gapY = fontSize * 2.7;
+        const angle = (rnd()*2 - 1) * 0.16;
+        const diag = Math.hypot(w, h);
+        const cols = Math.ceil(diag/gapX) + 1;
+        const rows = Math.ceil(diag/gapY) + 1;
+        let cells = '';
+        for(let j=-rows;j<=rows;j++){
+          const rowOffset = (j % 2 === 0) ? 0 : gapX*0.5;
+          const y = j * gapY;
+          for(let i=-cols;i<=cols;i++){
+            const x = i*gapX + rowOffset;
+            const dy = o.mode === 'flow' ? Math.sin(i*0.62 + j*0.38) * gapY * 0.14 : 0;
+            cells += `<text x="${n(x)}" y="${n(y + dy)}">${esc(text)}</text>`;
+          }
+        }
+        textLayer = `<g ${font} font-size="${n(fontSize)}" fill-opacity="${n(alpha)}" ` +
+          `transform="translate(${n(w/2)} ${n(h/2)}) rotate(${n(angle * 180 / Math.PI)})">${cells}</g>`;
+      }
+      if(radius > 0.01){
+        defs += `<filter id="tblur" x="-20%" y="-20%" width="140%" height="140%">` +
+          `<feGaussianBlur stdDeviation="${n(radius)}"/></filter>`;
+        textLayer = `<g filter="url(#tblur)">${textLayer}</g>`;
+      }
+    }
+
+    // 3) 暗角（GLSL 里是 1 - smoothstep(0.52,1.0,d)*0.17，这里用等比径向渐变近似）
+    defs += '<radialGradient id="tvig" cx="0.5" cy="0.5" r="0.5">' +
+      '<stop offset="0.75" stop-color="#000" stop-opacity="0"/>' +
+      '<stop offset="1" stop-color="#000" stop-opacity="0.17"/></radialGradient>';
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
+      `<defs>${defs}</defs>${body}${textLayer}` +
+      `<rect width="${w}" height="${h}" fill="url(#tvig)"/></svg>`;
+  }
+
+  /** 与 _blurRadiusPx 同公式，但按给定尺寸（1 用户单位 = 1px，dpr 视为 1） */
+  private _blurRadiusFor(w: number, h: number): number {
+    const b = Math.max(0, Math.min(1, Number(this.opts.blur) || 0));
+    if(b <= 0.001) return 0;
+    return Math.min(w, h) * this.opts.blurMaxRatio * b;
+  }
+
   /** 释放 WebGL context、事件监听与挂载的 canvas */
   destroy(): void {
     this._destroyed = true;
