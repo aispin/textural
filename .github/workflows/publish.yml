@@ -44,10 +44,18 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # 让 Release PR 自己合：一开出来就挂上 GitHub 原生 auto-merge，
-      # 必需检查通过（本仓库没配必需检查，等于立刻）后自动合入 → 全自动发版。
-      # 想恢复人工闸门：删掉这一步（或把仓库设置里的 Allow auto-merge 关掉）。
-      - name: Enable auto-merge on the release PR
+      # 让 Release PR 自己合，然后把发版流程再踢一脚。
+      #
+      # 两个坑都在这里踩平了：
+      #   1) 不能只挂 GitHub 的 auto-merge：它要求目标分支配了分支保护规则
+      #      （实测报 "Protected branch rules not configured for this branch"）。
+      #   2) 用 GITHUB_TOKEN 合并产生的 push **不会**触发下游 workflow（GitHub 防递归），
+      #      所以合并之后必须显式 dispatch 一次 Release + Pages，
+      #      否则 tag/Release/npm 发布和站点重部署都不会发生。
+      #      （workflow_dispatch 是唯二不受该限制的事件之一。）
+      #
+      # 想恢复人工闸门：删掉这一步即可。
+      - name: Merge the release PR and kick the release run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -57,12 +65,16 @@ jobs:
           pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
                   --json number,headRefName \
                   --jq '[.[] | select(.headRefName | startswith("release-please--"))][0].number // empty')"
-          if [ -n "$pr" ]; then
-            gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --merge --auto
-            echo "已为 Release PR #$pr 开启自动合并"
-          else
+          if [ -z "$pr" ]; then
             echo "本次没有待处理的 Release PR"
+            exit 0
           fi
+          gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --merge
+          echo "已合并 Release PR #$pr"
+          sleep 5
+          gh workflow run Release --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run "Deploy demo to GitHub Pages" --repo "$GITHUB_REPOSITORY" --ref main
+          echo "已重新触发生成 tag / npm 发布 / 站点重部署"
 
       # 2) 只有真的要发版时，才构建并发布（非发版的推送在这里就结束了）
       - if: ${{ steps.release.outputs.release_created }}
