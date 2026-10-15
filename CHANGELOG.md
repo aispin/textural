@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/aispin/textural/compare/v1.3.0...v1.3.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **sw:** 静态资源改成网络优先，并给用户「有新版本」提示 ([710926f](https://github.com/aispin/textural/commit/710926f840bc542cdbc51266afd278afb73f0974))
+
 ## [1.3.0](https://github.com/aispin/textural/compare/v1.2.0...v1.3.0) (2026-10-15)
 
 
