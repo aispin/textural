@@ -7,7 +7,7 @@ Turn any word into a soft, unobtrusive card background. Zero dependencies — a 
 [![npm version](https://img.shields.io/npm/v/@aifire/textural.svg)](https://www.npmjs.com/package/@aifire/textural)
 [![license](https://img.shields.io/npm/l/@aifire/textural.svg)](./LICENSE)
 
-- **4.8KB gzipped** (IIFE build, measured 4.83KB — see [Size](#size))
+- **5.8KB gzipped** (IIFE build, measured 5.80KB — see [Size](#size))
 - **Zero runtime dependencies**
 - **Three layouts**: `tile` seamless grid, `flow` flowing waves, `hero` giant watermark
 - **TypeScript types included** — `dist/index.d.ts` is generated from the same source
@@ -100,9 +100,12 @@ onBeforeUnmount(() => bg?.destroy());
 | `bg.update(options)` | Merges options and redraws immediately, reusing the WebGL context and the offscreen canvases. Returns `this` |
 | `bg.randomize(locked?)` | Randomizes the style options; keys in `locked` are pinned. Returns `this` |
 | `bg.toDataURL()` | The current background as a PNG data URL |
+| `bg.toSVG(width?, height?)` | The current background as a **vector** SVG string (defaults to the container size) |
 | `bg.destroy()` | Releases the WebGL context, unbinds listeners, removes the canvas |
 
 Readable properties: `bg.el`, `bg.opts` (defaults applied), `bg.theme`, `bg.hue`, `bg.seed`, and the static `Textural.defaults`.
+
+`toSVG()` renders the same palette and the same text layout as real vectors — the watermark stays an editable `<text>`, so the file opens cleanly in Figma or Illustrator. It cannot contain the WebGL-only passes (fbm warp, aurora noise, per-pixel grain), so it is very close to, but not pixel-identical with, the PNG export; use the PNG when you need the grain.
 
 ### randomize()
 
@@ -162,10 +165,10 @@ Real output of `npm run build` (esbuild 0.28, target es2019, measured locally):
 
 | Artifact | raw | gzip | brotli |
 | --- | --- | --- | --- |
-| `dist/index.js` (ESM, unminified, for your bundler) | 17.92KB | 6.28KB | 5.39KB |
-| `dist/textural.iife.min.js` (IIFE, minified) | 11.87KB | **4.83KB** | 4.30KB |
+| `dist/index.js` (ESM, unminified, for your bundler) | 22.63KB | 7.67KB | 6.55KB |
+| `dist/textural.iife.min.js` (IIFE, minified) | 14.45KB | **5.80KB** | 5.14KB |
 
-The “4.8KB gzipped” figure refers to the second row. Type declarations are not part of the runtime size.
+The “5.8KB gzipped” figure refers to the second row. Type declarations are not part of the runtime size.
 
 ## Releasing
 

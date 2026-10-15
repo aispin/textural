@@ -7,7 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/@aifire/textural.svg)](https://www.npmjs.com/package/@aifire/textural)
 [![license](https://img.shields.io/npm/l/@aifire/textural.svg)](./LICENSE)
 
-- **4.8KB gzip**（IIFE 构建，实测 4.83KB，见[体积](#体积)）
+- **5.8KB gzip**（IIFE 构建，实测 5.80KB，见[体积](#体积)）
 - **0 运行时依赖**
 - **3 种排布**：`tile` 无缝网格 / `flow` 波浪流动 / `hero` 超大水印
 - **TypeScript 类型随包发布**，`dist/index.d.ts` 与实现同源生成
@@ -100,9 +100,12 @@ onBeforeUnmount(() => bg?.destroy());
 | `bg.update(options)` | 增量改配置并立即重绘；复用已有 WebGL context 与离屏画布，返回 `this` |
 | `bg.randomize(locked?)` | 随机重排样式参数；`locked` 里的键被锁定不参与随机，返回 `this` |
 | `bg.toDataURL()` | 导出当前背景为 PNG data URL |
+| `bg.toSVG(width?, height?)` | 导出当前背景为**矢量** SVG 字符串（默认取容器尺寸） |
 | `bg.destroy()` | 释放 WebGL context、事件监听并摘掉 canvas |
 
 可读属性：`bg.el`、`bg.opts`（补齐默认值后的配置）、`bg.theme`、`bg.hue`、`bg.seed`、静态 `Textural.defaults`。
+
+`toSVG()` 用真正的矢量还原同一套配色与文字排布——水印仍然是可编辑的 `<text>`，能直接丢进 Figma / Illustrator 改。它装不下 WebGL 独有的那几步（fbm 扭曲、极光噪声、逐像素颗粒），所以和 PNG 导出非常接近、但并非逐像素一致；要颗粒感就导 PNG。
 
 ### randomize()
 
@@ -163,10 +166,10 @@ npm run build:site  # 组装 site/（demo + IIFE）本地看效果
 
 | 产物 | raw | gzip | brotli |
 | --- | --- | --- | --- |
-| `dist/index.js`（ESM，未压缩，交给使用方打包器） | 17.92KB | 6.28KB | 5.39KB |
-| `dist/textural.iife.min.js`（IIFE，已压缩） | 11.87KB | **4.83KB** | 4.30KB |
+| `dist/index.js`（ESM，未压缩，交给使用方打包器） | 22.63KB | 7.67KB | 6.55KB |
+| `dist/textural.iife.min.js`（IIFE，已压缩） | 14.45KB | **5.80KB** | 5.14KB |
 
-对外口径的 “4.8KB gzip” 指第二行。类型声明不计入运行时体积。
+对外口径的 “5.8KB gzip” 指第二行。类型声明不计入运行时体积。
 
 ## 发版
 

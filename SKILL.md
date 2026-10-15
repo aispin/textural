@@ -59,6 +59,7 @@ React / Vue 的挂载与清理范例见 [README](./README.md#快速开始)。
 | `update(options)` | `this` | 增量改配置并立即重绘，复用 WebGL context 与离屏画布 |
 | `randomize(locked?)` | `this` | 随机重排样式参数；`locked` 里的键锁定不随机，不传 = 样式全随机 |
 | `toDataURL()` | `string` | 当前背景的 PNG data URL |
+| `toSVG(width?, height?)` | `string` | 当前背景的矢量 SVG；文字是可编辑的 `<text>`，但不含 WebGL 的颗粒与扭曲（与 PNG 接近、非逐像素一致） |
 | `destroy()` | `void` | 释放 context、解绑 ResizeObserver、摘掉 canvas |
 
 属性：`el`、`opts`（补齐默认值后的配置）、`theme`、`hue`、`seed`、静态 `Textural.defaults`。
