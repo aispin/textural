@@ -10,7 +10,7 @@
 - **3 种排布**：`tile` 无缝网格 / `flow` 波浪流动 / `hero` 超大水印
 - **TypeScript 类型随包发布**，`dist/index.d.ts` 与实现同源生成
 
-在线 Demo：<https://aispin.github.io/textural/>
+在线 Demo：<https://aispin.github.io/textural/> —— 可安装为 PWA（带 app icon / favicon），面板里能实时调参、把当前背景导出成任意宽高的 PNG；页面上还有一节讲怎么把 `SKILL.md` 接进编码助手。
 
 ## 安装
 

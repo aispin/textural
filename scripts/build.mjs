@@ -9,7 +9,7 @@
  */
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 
 const withSite = process.argv.includes('--site');
@@ -51,6 +51,10 @@ if (withSite) {
   mkdirSync(at('site'), { recursive: true });
   copyFileSync(at('demo/index.html'), at('site/index.html'));
   copyFileSync(at('dist/textural.iife.min.js'), at('site/textural.js'));
+  // PWA：manifest / service worker 必须在站点根，静态资源放 assets/
+  copyFileSync(at('demo/manifest.webmanifest'), at('site/manifest.webmanifest'));
+  copyFileSync(at('demo/sw.js'), at('site/sw.js'));
+  cpSync(at('demo/assets'), at('site/assets'), { recursive: true });
   writeFileSync(at('site/.nojekyll'), '');
-  console.log('site/ 已组装（index.html + textural.js）');
+  console.log('site/ 已组装（index.html + textural.js + PWA 资源）');
 }

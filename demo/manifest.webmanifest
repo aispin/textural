@@ -1,0 +1,17 @@
+{
+  "name": "Textural — 把文字变成卡片背景",
+  "short_name": "Textural",
+  "description": "把任意文字渲染成柔和、不抢镜的卡片背景。零依赖，Canvas + WebGL。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafbfd",
+  "theme_color": "#4f6bff",
+  "icons": [
+    { "src": "./assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Textural — 把文字变成卡片背景</title>
 <meta name="description" content="Textural 是一个 4.8KB（gzip）的零依赖库，把任意文字渲染成柔和、不抢镜的卡片背景。" />
+<meta name="theme-color" content="#4f6bff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#090b10" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="./assets/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="icon" href="./assets/favicon-48.png" sizes="48x48" type="image/png" />
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="application-name" content="Textural" />
+<meta name="apple-mobile-web-app-title" content="Textural" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <style>
 /* ==========================================================================
    Design Tokens
@@ -110,15 +120,8 @@ img,svg,canvas{display:block}
 }
 .brand-mark{
   width:26px;height:26px;border-radius:8px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   box-shadow: 0 4px 14px color-mix(in oklab, var(--accent) 40%, transparent);
-  position:relative;
-  display:grid;place-items:center;
-  color:#fff;font-size:13px;font-weight:900;
-}
-.brand-mark::after{
-  content:"";position:absolute;inset:3px;border-radius:5px;
-  border:1px solid rgba(255,255,255,.35);
+  display:block;flex-shrink:0;
 }
 .nav-links{
   display:flex;gap:4px;flex:1;
@@ -503,8 +506,8 @@ img,svg,canvas{display:block}
   position:fixed;
   top:0;right:0;
   height:100vh;
-  width: 400px;
-  max-width: 92vw;
+  width: min(1180px, 94vw);
+  max-width: 94vw;
   background: var(--bg-elev);
   border-left:1px solid var(--line);
   box-shadow: -30px 0 80px rgba(0,0,0,.18);
@@ -516,6 +519,92 @@ img,svg,canvas{display:block}
   overflow:hidden;
 }
 .drawer.open{ transform: translateX(0) }
+
+.drawer-main{
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+.drawer-preview{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding: 22px;
+  background: var(--bg-sub);
+  border-right:1px solid var(--line);
+}
+.preview-stage-wrap{
+  flex:1;
+  min-height:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.preview-stage{
+  flex:none;
+  border-radius: var(--radius-md);
+  overflow:hidden;
+  box-shadow: var(--shadow-md);
+  background: var(--bg-elev);
+}
+.preview-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.preview-sizes{ display:flex; align-items:center; gap:8px }
+.size-field{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--fg-mute);
+}
+.size-field input{
+  width:78px;
+  padding:7px 9px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size:12px;
+}
+.size-field input:focus{ outline:none; border-color:var(--accent) }
+.size-x{ color: var(--fg-mute); font-size:12px }
+.mini-btn{
+  padding:7px 11px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font-size:11.5px;font-weight:700;
+  cursor:pointer;
+  transition: background-color .18s, color .18s;
+}
+.mini-btn:hover{ background: var(--panel-hi); color: var(--fg) }
+#pg-download{ font-size:12.5px; padding:9px 14px }
+#pg-download .out-size{
+  font-family: var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  opacity:.8;
+}
+.preview-hint{
+  margin:0;
+  font-size:12px;
+  line-height:1.6;
+  color: var(--fg-mute);
+}
+.drawer-rail{
+  width:400px;
+  flex:none;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
 
 .drawer-head{
   display:flex;
@@ -734,6 +823,87 @@ input[type=range]::-moz-range-thumb{
 .drawer-foot .btn{ flex:1; justify-content:center }
 
 /* ==========================================================================
+   Agents — SKILL.md
+   ========================================================================== */
+.agent-grid{
+  display:grid;
+  gap:18px;
+  margin-top:34px;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+}
+.agent-card{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-sm);
+}
+.agent-card-h{ display:flex;align-items:center;justify-content:space-between;gap:10px }
+.agent-name{ font-weight:800;letter-spacing:-.01em;font-size:15px }
+.agent-scope{
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  padding:4px 8px;border-radius:999px;
+}
+.agent-card pre{
+  margin:0;padding:14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--code-bg);color: var(--code-fg);
+  overflow-x:auto;white-space:pre;
+  font-size:12.5px;line-height:1.7;
+}
+.agent-note{ margin:0;font-size:13px;line-height:1.65;color:var(--fg-dim) }
+.agent-prompt{
+  margin-top:18px;
+  border:1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-sm);
+  overflow:hidden;
+}
+.agent-prompt-h{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color: var(--fg-mute);
+}
+#agent-copy{
+  border:1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg-dim);
+  border-radius:8px;
+  padding:6px 12px;
+  font-family: var(--font-sans);
+  font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;
+  cursor:pointer;
+  transition: background-color .18s, color .18s, border-color .18s;
+}
+#agent-copy:hover{ background: var(--panel-hi); color: var(--fg) }
+#agent-copy.done{ color:#22c55e;border-color:color-mix(in oklab, #22c55e 45%, transparent) }
+.agent-prompt pre{
+  margin:0;padding:18px;
+  background: var(--code-bg);color: var(--code-fg);
+  overflow-x:auto;white-space:pre-wrap;
+  font-size:13px;line-height:1.75;
+}
+.agent-links{
+  display:flex;flex-wrap:wrap;gap:18px;
+  padding:14px 18px;
+  font-size:13px;font-weight:600;
+}
+.agent-links a{ color: var(--accent) }
+.nav-links a.nav-gh path{ fill: currentColor }
+.nav-links a.nav-gh{
+  display:flex;align-items:center;gap:7px;
+}
+.nav-links a.nav-gh svg{ width:15px;height:15px }
+
+/* ==========================================================================
    Footer
    ========================================================================== */
 footer{
@@ -763,6 +933,13 @@ footer{
    Responsive
    ========================================================================== */
 @media (max-width: 980px){
+  .drawer-main{ flex-direction:column }
+  .drawer-preview{
+    flex:none;height:46vh;
+    border-right:0;border-bottom:1px solid var(--line);
+  }
+  .drawer-rail{ width:100%;flex:1 }
+  .agent-grid{ grid-template-columns: 1fr }
   .docs-layout{ grid-template-columns: 1fr }
   .docs-code-panel{ position: static }
   .hero-showcase{ grid-template-columns: repeat(2, minmax(0,1fr)); padding: 32px 20px 20px }
@@ -775,6 +952,8 @@ footer{
   .hero-showcase{ grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; padding: 24px 14px 14px }
   .opt-row{ grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 12px 16px }
   .opt-row .d{ grid-column: 1 / -1 }
+  .drawer-preview{ height:38vh; padding:16px }
+  .preview-bar{ gap:10px }
   .drawer{ width:100% }
 }
 @media (prefers-reduced-motion: reduce){
@@ -792,11 +971,16 @@ footer{
 <nav class="nav" id="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top">
-      <span class="brand-mark">T</span>
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="26" height="26" />
       <span>Textural</span>
     </a>
     <div class="nav-links">
       <a href="#docs" data-i18n="nav.docs">接入与配置</a>
+      <a href="#agents" data-i18n="nav.agents">Agent 接入</a>
+      <a class="nav-gh" href="https://github.com/aispin/textural" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span>GitHub</span>
+      </a>
     </div>
     <div class="nav-tools">
       <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">
@@ -875,7 +1059,6 @@ footer{
           <button class="docs-tab" data-tab="usage" data-i18n="docs.tab.usage">usage</button>
           <button class="docs-tab" data-tab="update" data-i18n="docs.tab.update">update</button>
           <button class="docs-tab" data-tab="cleanup" data-i18n="docs.tab.cleanup">cleanup</button>
-          <button class="docs-tab" data-tab="agents" data-i18n="docs.tab.agents">agents</button>
         </div>
 
         <div class="docs-pane" data-pane="install">
@@ -928,24 +1111,6 @@ onUnmount(() => {
 const png = bg.toDataURL();</code></pre>
         </div>
 
-        <div class="docs-pane" data-pane="agents" hidden>
-<pre><code class="js">// 给 AI Agent 的最短路径：先看容器有没有尺寸，再 new
-// 完整契约（选项表 / 坑位 / 验收命令）见仓库 SKILL.md
-const bg = new Textural('#card', { text: '灵感' });
-
-// 改文案 —— 90% 的需求就这一行
-bg.update({ text: '专注' });
-
-// 要换配色但不想选：交给哈希，或者整体随机
-bg.update({ hue: null });              // 由文字推导
-bg.randomize();                        // 样式全随机
-bg.randomize({ text: '回声' });         // 换词，样式随机
-bg.randomize({ mode: 'hero' });        // 锁定排布，其余随机
-
-// 卸载时释放 WebGL context（不调用 = 泄漏 context）
-bg.destroy();</code></pre>
-        </div>
-
         <div class="docs-hint">
           <span>💡</span>
           <span data-i18n="docs.hint">所有配置项都支持热更新，</span>
@@ -975,6 +1140,72 @@ bg.destroy();</code></pre>
   </div>
 </section>
 
+<!-- ==========================================================================
+     AGENTS — SKILL.md 怎么接进 Agent
+     ========================================================================== -->
+<section class="section" id="agents">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow" data-i18n="agent.eyebrow">For coding agents</div>
+      <h2 class="section-title" data-i18n="agent.title">让 Agent 自己会用 Textural</h2>
+      <p class="section-sub" data-i18n="agent.subtitle">
+        仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、以及改完代码要跑的自检命令。
+        把它放进助手读取的位置，之后你在聊天窗口里说一句需求就够了。
+      </p>
+    </div>
+
+    <div class="agent-grid reveal">
+      <div class="agent-card">
+        <div class="agent-card-h">
+          <span class="agent-name">Claude Code</span>
+          <span class="agent-scope" data-i18n="agent.scope.project">项目级</span>
+        </div>
+<pre><code>mkdir -p .claude/skills/textural
+curl -o .claude/skills/textural/SKILL.md \
+  https://raw.githubusercontent.com/aispin/textural/main/SKILL.md</code></pre>
+        <p class="agent-note" data-i18n="agent.note.claude">装好后用 /textural 直接唤起，也可以只描述需求，让它按 description 自动匹配；想全局生效就放 ~/.claude/skills/。</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-card-h">
+          <span class="agent-name">Codex</span>
+          <span class="agent-scope" data-i18n="agent.scope.project">项目级</span>
+        </div>
+<pre><code>mkdir -p .agents/skills/textural
+curl -o .agents/skills/textural/SKILL.md \
+  https://raw.githubusercontent.com/aispin/textural/main/SKILL.md</code></pre>
+        <p class="agent-note" data-i18n="agent.note.codex">Codex 会从工作目录一路扫到仓库根的 .agents/skills；会话里用 /skills 或输入 $ 唤起。个人级放 ~/.agents/skills/。</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-card-h">
+          <span class="agent-name" data-i18n="agent.name.other">其它助手 / 不想装文件</span>
+          <span class="agent-scope" data-i18n="agent.scope.adhoc">临时</span>
+        </div>
+<pre><code># 规则文件：.cursor/rules/textural.mdc
+#           AGENTS.md · CLAUDE.md
+# 最省事：把正文贴进对话
+https://github.com/aispin/textural/blob/main/SKILL.md</code></pre>
+        <p class="agent-note" data-i18n="agent.note.other">SKILL.md 就是一份普通 Markdown：贴进聊天窗口，或写进项目的 AGENTS.md / CLAUDE.md 都成立。</p>
+      </div>
+    </div>
+
+    <div class="agent-prompt reveal">
+      <div class="agent-prompt-h">
+        <span data-i18n="agent.prompt.title">一段可以直接粘贴的提示词</span>
+        <button id="agent-copy" data-i18n="agent.copy">复制</button>
+      </div>
+      <pre><code id="agent-prompt-code" data-i18n="agent.prompt.code">用 @aifire/textural 给 #hero 加文字底纹：text 用「抵达」，mode 用 hero，blur 0.5、intensity 0.45，theme 跟随页面明暗。
+容器已有尺寸，记得在组件卸载时 destroy()。参数拿不准就参考 SKILL.md 的选项表。</code></pre>
+      <div class="agent-links">
+        <a href="https://github.com/aispin/textural/blob/main/SKILL.md" target="_blank" rel="noopener" data-i18n="agent.link.skill">查看 SKILL.md 原文 →</a>
+        <a href="https://github.com/aispin/textural" target="_blank" rel="noopener" data-i18n="agent.link.repo">GitHub 仓库 →</a>
+        <a href="https://www.npmjs.com/package/@aifire/textural" target="_blank" rel="noopener" data-i18n="agent.link.npm">npm 页面 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <!-- ==========================================================================
@@ -983,12 +1214,14 @@ bg.destroy();</code></pre>
 <footer>
   <div class="container footer-inner">
     <div style="display:flex;align-items:center;gap:10px">
-      <span class="brand-mark">T</span>
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="26" height="26" />
       <span class="brand">Textural</span>
     </div>
     <div data-i18n="footer.tagline">让每一个卡片都有质感</div>
     <div class="footer-links">
       <a href="#docs" data-i18n="footer.docs">文档</a>
+      <a href="https://github.com/aispin/textural" target="_blank" rel="noopener" data-i18n="footer.repo">GitHub</a>
+      <a href="https://github.com/aispin/textural/blob/main/SKILL.md" target="_blank" rel="noopener" data-i18n="footer.skill">SKILL.md</a>
       <span data-i18n="footer.license">MIT · 自由商用</span>
     </div>
   </div>
@@ -1010,6 +1243,37 @@ bg.destroy();</code></pre>
     </button>
   </div>
 
+  <div class="drawer-main">
+    <!-- 左：源背景的实时副本 + 导出（改参数同步源背景，改宽高只动这里） -->
+    <div class="drawer-preview">
+      <div class="preview-stage-wrap">
+        <div class="preview-stage" id="pg-stage"></div>
+      </div>
+      <div class="preview-bar">
+        <div class="preview-sizes">
+          <label class="size-field">
+            <span data-i18n="drawer.width">宽</span>
+            <input id="pg-w" type="number" min="64" max="4096" step="1" inputmode="numeric" value="1180" />
+          </label>
+          <span class="size-x" aria-hidden="true">×</span>
+          <label class="size-field">
+            <span data-i18n="drawer.height">高</span>
+            <input id="pg-h" type="number" min="64" max="4096" step="1" inputmode="numeric" value="520" />
+          </label>
+          <button class="mini-btn" id="pg-size-src" data-i18n="drawer.sourceSize">源尺寸</button>
+        </div>
+        <button class="btn btn-primary" id="pg-download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 12l5 5 5-5M4 20h16"/></svg>
+          <span data-i18n="drawer.download">下载 PNG</span>
+          <span class="out-size" id="pg-out-size">1180 × 520</span>
+        </button>
+      </div>
+      <p class="preview-hint" data-i18n="drawer.previewHint">
+        左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览和导出的 PNG。
+      </p>
+    </div>
+
+    <div class="drawer-rail">
   <div class="drawer-body">
     <div class="field">
       <label for="pg-text"><span data-i18n="drawer.input">文字 / 词语</span></label>
@@ -1086,6 +1350,8 @@ bg.destroy();</code></pre>
       <span data-i18n="drawer.reset">重置</span>
     </button>
   </div>
+    </div>
+  </div>
 </aside>
 
 <!-- 库本体：构建产物（npm run build 生成），页面逻辑见文件末尾 -->
@@ -1104,6 +1370,7 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const I18N = {
   zh: {
     'nav.docs': '接入与配置',
+    'nav.agents': 'Agent 接入',
 
     'hero.badge.pill': 'v1.0',
     'hero.badge.text': '零依赖 · 4.8KB gzip',
@@ -1130,7 +1397,6 @@ const I18N = {
     'docs.tab.usage': 'usage',
     'docs.tab.update': 'update',
     'docs.tab.cleanup': 'cleanup',
-    'docs.tab.agents': 'agents',
     'docs.hint': '所有配置项都支持热更新，',
     'docs.hint2': '会保留 WebGL context 与离屏画布，只重绘变化的部分。',
     'opts.title': '配置项',
@@ -1146,8 +1412,27 @@ const I18N = {
     'opt.animate': '是否启用 GLSL 流动动画',
     'opt.seed': '随机种子；相同种子产生相同底纹',
 
+    'agent.eyebrow': 'For coding agents',
+    'agent.title': '让 Agent 自己会用 Textural',
+    'agent.subtitle': '仓库根目录的 SKILL.md 是写给编码助手的契约：什么时候该用、最小调用、全部选项、六个真会咬人的坑、以及改完代码要跑的自检命令。把它放进助手读取的位置，之后你在聊天窗口里说一句需求就够了。',
+    'agent.scope.project': '项目级',
+    'agent.scope.adhoc': '临时',
+    'agent.name.other': '其它助手 / 不想装文件',
+    'agent.note.claude': '装好后用 /textural 直接唤起，也可以只描述需求，让它按 description 自动匹配；想全局生效就放 ~/.claude/skills/。',
+    'agent.note.codex': 'Codex 会从工作目录一路扫到仓库根的 .agents/skills；会话里用 /skills 或输入 $ 唤起。个人级放 ~/.agents/skills/。',
+    'agent.note.other': 'SKILL.md 就是一份普通 Markdown：贴进聊天窗口，或写进项目的 AGENTS.md / CLAUDE.md 都成立。',
+    'agent.prompt.title': '一段可以直接粘贴的提示词',
+    'agent.prompt.code': '用 @aifire/textural 给 #hero 加文字底纹：text 用「抵达」，mode 用 hero，blur 0.5、intensity 0.45，theme 跟随页面明暗。\n容器已有尺寸，记得在组件卸载时 destroy()。参数拿不准就参考 SKILL.md 的选项表。',
+    'agent.copy': '复制',
+    'agent.copied': '已复制',
+    'agent.link.skill': '查看 SKILL.md 原文 →',
+    'agent.link.repo': 'GitHub 仓库 →',
+    'agent.link.npm': 'npm 页面 →',
+
     'footer.tagline': '让每一个卡片都有质感',
     'footer.docs': '文档',
+    'footer.repo': 'GitHub',
+    'footer.skill': 'SKILL.md',
     'footer.license': 'MIT · 自由商用',
 
     'drawer.title': '实时调教',
@@ -1168,6 +1453,11 @@ const I18N = {
     'drawer.copied': '已复制',
     'drawer.random': '随机',
     'drawer.reset': '重置',
+    'drawer.width': '宽',
+    'drawer.height': '高',
+    'drawer.sourceSize': '源尺寸',
+    'drawer.download': '下载 PNG',
+    'drawer.previewHint': '左边这份是当前源背景的实时副本：改参数会同步到源背景，改宽高只影响预览和导出的 PNG。',
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
 
@@ -1176,6 +1466,7 @@ const I18N = {
   },
   en: {
     'nav.docs': 'Docs & API',
+    'nav.agents': 'For agents',
 
     'hero.badge.pill': 'v1.0',
     'hero.badge.text': 'Zero deps · 4.8KB gzipped',
@@ -1202,7 +1493,6 @@ const I18N = {
     'docs.tab.usage': 'usage',
     'docs.tab.update': 'update',
     'docs.tab.cleanup': 'cleanup',
-    'docs.tab.agents': 'agents',
     'docs.hint': 'Every option can be hot-swapped. ',
     'docs.hint2': 'keeps the WebGL context and offscreen canvases alive — only redraws what changed.',
     'opts.title': 'Options',
@@ -1218,8 +1508,27 @@ const I18N = {
     'opt.animate': 'Enable GLSL flow animation',
     'opt.seed': 'Random seed. Same seed → same texture',
 
+    'agent.eyebrow': 'For coding agents',
+    'agent.title': 'Let your agent drive Textural',
+    'agent.subtitle': 'SKILL.md at the repo root is the contract for coding agents: when to reach for this library, the minimal call, every option, six pitfalls that really bite, and the checks to run after an edit. Drop it where your assistant looks, and a one-line request in chat is enough.',
+    'agent.scope.project': 'project',
+    'agent.scope.adhoc': 'on demand',
+    'agent.name.other': 'Other agents / no install',
+    'agent.note.claude': 'Then invoke it with /textural, or just describe the task and let the description match; use ~/.claude/skills/ for every project.',
+    'agent.note.codex': 'Codex scans .agents/skills from your working directory up to the repo root; type /skills or $ in a session. Use ~/.agents/skills/ for every project.',
+    'agent.note.other': 'SKILL.md is plain Markdown: paste it into the chat, or into an AGENTS.md / CLAUDE.md in your project.',
+    'agent.prompt.title': 'A prompt you can paste right away',
+    'agent.prompt.code': 'Add a text texture to #hero with @aifire/textural: text "arrival", mode hero, blur 0.5, intensity 0.45, theme follows the page.\nThe container already has a size — call destroy() when the component unmounts. Check the option table in SKILL.md if unsure.',
+    'agent.copy': 'Copy',
+    'agent.copied': 'Copied',
+    'agent.link.skill': 'Read SKILL.md →',
+    'agent.link.repo': 'GitHub repo →',
+    'agent.link.npm': 'npm page →',
+
     'footer.tagline': 'Give every card a soul',
     'footer.docs': 'Docs',
+    'footer.repo': 'GitHub',
+    'footer.skill': 'SKILL.md',
     'footer.license': 'MIT · free for commercial use',
 
     'drawer.title': 'Live tuning',
@@ -1240,6 +1549,11 @@ const I18N = {
     'drawer.copied': 'Copied',
     'drawer.random': 'Random',
     'drawer.reset': 'Reset',
+    'drawer.width': 'W',
+    'drawer.height': 'H',
+    'drawer.sourceSize': 'Source size',
+    'drawer.download': 'Download PNG',
+    'drawer.previewHint': 'This left pane is a live copy of the source background: parameter changes sync to the source, width/height only affect the preview and the exported PNG.',
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
 
@@ -1425,6 +1739,10 @@ function openDrawer(target){
   updateTargetLabel();
   updateDrawerCode();
 
+  // 左边那份副本：宽高默认取源元素尺寸（之后改宽高不动源背景）
+  resetSizeToSource();
+  mountPreview();
+
   // 显示
   drawer.classList.add('open');
   backdrop.classList.add('open');
@@ -1433,6 +1751,7 @@ function openDrawer(target){
 }
 
 function closeDrawer(){
+  destroyPreview();
   drawer.classList.remove('open');
   backdrop.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
@@ -1459,8 +1778,9 @@ function applyPatch(patch){
   // 同步到目标配置
   Object.assign(getTargetConfig(), patch);
 
-  // 立即更新目标背景
+  // 立即更新目标背景（源背景）与左边那份副本
   getTargetBg().update(patch);
+  if(previewBg) previewBg.update(patch);
 
   updateDrawerCode();
 }
@@ -1471,6 +1791,105 @@ function setRange(id, valId, value, fmt){
   const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
   input.style.setProperty('--pct', pct + '%');
   document.getElementById(valId).textContent = fmt ? fmt(parseFloat(value)) : value;
+}
+
+/* -------------------- 抽屉预览：源背景的副本 + 导出 PNG -------------------- */
+const previewStage = $('#pg-stage');
+const SIZE_MIN = 64;
+const SIZE_MAX = 4096;
+const exportSize = { w: 1180, h: 520 };
+let previewBg = null;
+
+function sourceSize(){
+  const bg = getTargetBg();
+  if(!bg) return { w: 1180, h: 520 };
+  const r = bg.el.getBoundingClientRect();
+  return { w: Math.max(1, Math.round(r.width)), h: Math.max(1, Math.round(r.height)) };
+}
+
+// 舞台尺寸 = 按导出比例等比缩放到可用区域（居中由 CSS 负责），不改变源背景
+function layoutPreview(){
+  const wrap = previewStage.parentElement;
+  const availW = wrap.clientWidth, availH = wrap.clientHeight;
+  if(!availW || !availH) return;
+  const k = Math.min(availW / exportSize.w, availH / exportSize.h);
+  previewStage.style.width  = Math.max(1, Math.round(exportSize.w * k)) + 'px';
+  previewStage.style.height = Math.max(1, Math.round(exportSize.h * k)) + 'px';
+  $('#pg-out-size').textContent = exportSize.w + ' × ' + exportSize.h;
+}
+
+function mountPreview(){
+  destroyPreview();
+  layoutPreview();
+  const src = getTargetBg();
+  if(!src) return;
+  // 复制源背景的完整配置（seed / 主题 / 动效都在里面）；
+  // dprMax 固定 1 → 画布像素 = CSS 像素，预览就是导出 PNG 的等比缩放。
+  previewBg = new Textural(previewStage, { ...src.opts, dprMax: 1 });
+  // 抽屉滑入动画结束后再量一次，避免首次量到未完成布局的尺寸
+  requestAnimationFrame(() => { if(previewBg) layoutPreview(); });
+}
+
+function destroyPreview(){
+  if(previewBg){ previewBg.destroy(); previewBg = null; }
+}
+
+const clampSize = v => Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(Number(v) || SIZE_MIN)));
+
+// 只改预览与导出尺寸：源背景一个像素都不动
+function applySizeInputs(normalize){
+  exportSize.w = clampSize($('#pg-w').value);
+  exportSize.h = clampSize($('#pg-h').value);
+  if(normalize){
+    $('#pg-w').value = exportSize.w;
+    $('#pg-h').value = exportSize.h;
+  }
+  layoutPreview();
+}
+
+function resetSizeToSource(){
+  const s = sourceSize();
+  $('#pg-w').value = s.w;
+  $('#pg-h').value = s.h;
+  applySizeInputs(true);
+}
+
+function downloadPNG(){
+  const { w, h } = exportSize;
+  const holder = document.createElement('div');
+  holder.style.cssText =
+    `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px;pointer-events:none`;
+  document.body.appendChild(holder);
+  let offscreen = null;
+  try{
+    // dprMax:1 → 画布 = W×H 像素，导出的 PNG 就是 W×H 原图
+    offscreen = new Textural(holder, { ...getTargetBg().opts, dprMax: 1, animate: false });
+    const a = document.createElement('a');
+    a.href = offscreen.toDataURL();
+    a.download = `textural-${String(drawerState.text || 'bg').trim()}-${w}x${h}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    if(offscreen) offscreen.destroy();
+    holder.remove();
+  }
+}
+
+function bindPreviewControls(){
+  const wInput = $('#pg-w'), hInput = $('#pg-h');
+  let timer = null;
+  const debounced = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => applySizeInputs(false), 150);
+  };
+  wInput.addEventListener('input', debounced);
+  hInput.addEventListener('input', debounced);
+  wInput.addEventListener('change', () => applySizeInputs(true));
+  hInput.addEventListener('change', () => applySizeInputs(true));
+  $('#pg-size-src').addEventListener('click', resetSizeToSource);
+  $('#pg-download').addEventListener('click', downloadPNG);
+  window.addEventListener('resize', () => { if(previewBg) layoutPreview(); });
 }
 
 /* -------------------- 抽屉控件 -------------------- */
@@ -1515,9 +1934,11 @@ const bg = new Textural('#card', {
 function highlight(src){
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const tokens = [];
+  // 占位符用私用区字符而不是数字：数字会被下面的「数字高亮」当成代码里的数字裹进 span，
+  // 占位符一旦被包住就再也还原不回来（表现为代码面板里出现 1、2、3 这样的编号）。
   const stash = (cls, txt) => {
     tokens.push(`<span class="tok-${cls}">${esc(txt)}</span>`);
-    return `\u0000${tokens.length-1}\u0000`;
+    return `\u0000${String.fromCharCode(0xE000 + tokens.length - 1)}\u0000`;
   };
 
   src = src.replace(/\/\/[^\n]*/g, m => stash('com', m));
@@ -1527,7 +1948,7 @@ function highlight(src){
   src = src.replace(/\b(import|from|const|new|let|var|function|return)\b/g, '<span class="tok-key">$1</span>');
   src = src.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
   src = src.replace(/\b(Textural|update)\b/g, '<span class="tok-fn">$1</span>');
-  src = src.replace(/\u0000(\d+)\u0000/g, (_, i) => tokens[+i]);
+  src = src.replace(/\u0000([\uE000-\uF8FF])\u0000/g, (_, ch) => tokens[ch.charCodeAt(0) - 0xE000]);
   return src;
 }
 
@@ -1675,7 +2096,33 @@ function bindGlobalEvents(){
     applyTheme();
     const next = theme === 'dark' ? 'dark' : 'light';
     bgs.forEach(bg => bg.update({ theme: next }));
+    if(previewBg) previewBg.update({ theme: next });
     refreshShowcaseTheme();
+  });
+}
+
+/* -------------------- Agent 区块：复制提示词 -------------------- */
+function bindAgentCopy(){
+  const btn = $('#agent-copy');
+  if(!btn) return;
+  btn.addEventListener('click', async () => {
+    const text = $('#agent-prompt-code').textContent;
+    try{
+      await navigator.clipboard.writeText(text);
+      const prev = btn.textContent;
+      btn.classList.add('done');
+      btn.textContent = t('agent.copied');
+      setTimeout(() => { btn.classList.remove('done'); btn.textContent = prev; }, 1400);
+    }catch(_){}
+  });
+}
+
+/* -------------------- PWA -------------------- */
+function registerServiceWorker(){
+  // file:// 下没有 SW，直接跳过（本地双击打开也不会报错）
+  if(!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 
@@ -1687,6 +2134,9 @@ function init(){
   bindReveal();
   bindDocsTabs();
   bindGlobalEvents();
+  bindPreviewControls();
+  bindAgentCopy();
+  registerServiceWorker();
 
   requestAnimationFrame(() => {
     // Hero 背景
