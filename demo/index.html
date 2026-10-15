@@ -865,6 +865,24 @@ input[type=range]::-moz-range-thumb{
 }
 .nav-links a.nav-gh svg{ width:15px;height:15px }
 
+/* ---- 新版本提示 ---- */
+.update-toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform: translateX(-50%);
+  z-index: 95;
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px 10px 16px;
+  border:1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font-size:13px;
+  box-shadow: var(--shadow-md);
+}
+.update-toast[hidden]{ display:none }
+
 /* ==========================================================================
    Footer
    ========================================================================== */
@@ -1280,6 +1298,12 @@ const png = bg.toDataURL();</code></pre>
   </div>
 </aside>
 
+<!-- 新版本提示：Service Worker 装了新版就先亮出来，用户点了才刷新（不静默打断） -->
+<div class="update-toast" id="update-toast" hidden role="status" aria-live="polite">
+  <span data-i18n="update.text">有新版本可用</span>
+  <button class="mini-btn" id="update-refresh" data-i18n="update.action">刷新</button>
+</div>
+
 <!-- 库本体：构建产物（npm run build 生成），页面逻辑见文件末尾 -->
 <script src="./textural.js"></script>
 <script>
@@ -1379,6 +1403,9 @@ const I18N = {
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
 
+    'update.text': '有新版本可用',
+    'update.action': '刷新',
+
     'lang.current': '中文',
     'lang.other': 'EN'
   },
@@ -1466,6 +1493,9 @@ const I18N = {
     'drawer.previewHint': 'This left pane is a live copy of the source background: parameter changes sync to the source, width/height only affect the preview and the exported files. The SVG is vector (editable text) and has no WebGL grain.',
     'drawer.code.hero': '// Hero background',
     'drawer.code.card': '// Card',
+
+    'update.text': 'A new version is available',
+    'update.action': 'Refresh',
 
     'lang.current': 'EN',
     'lang.other': '中文'
@@ -2041,8 +2071,44 @@ function bindAgentCopy(){
 function registerServiceWorker(){
   // file:// 下没有 SW，直接跳过（本地双击打开也不会报错）
   if(!('serviceWorker' in navigator) || location.protocol === 'file:') return;
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+  const toast = $('#update-toast');
+  const showUpdateToast = () => { if(toast) toast.hidden = false; };
+  let swReg = null;
+  let updateRequested = false;
+
+  $('#update-refresh').addEventListener('click', () => {
+    updateRequested = true;
+    // 新 SW 在待命 → 让它立刻接管，接管后 controllerchange 会刷新页面
+    if(swReg && swReg.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else location.reload();
+  });
+
+  // 只有用户点过提示才刷新：静默刷新会打断正在调参的人
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(updateRequested) location.reload();
+  });
+
+  window.addEventListener('load', async () => {
+    try{
+      // updateViaCache:'none' → sw.js 本身也每次重新校验，别被 HTTP 缓存卡住
+      swReg = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+      // 上次访问留下的「待命中」新版本
+      if(swReg.waiting && navigator.serviceWorker.controller) showUpdateToast();
+      swReg.addEventListener('updatefound', () => {
+        const incoming = swReg.installing;
+        if(!incoming) return;
+        incoming.addEventListener('statechange', () => {
+          // 装好且有旧版本在跑 = 真的更新了（首次安装不算）
+          if(incoming.state === 'installed' && navigator.serviceWorker.controller) showUpdateToast();
+        });
+      });
+    }catch(_){}
+  });
+
+  // 常驻标签页：切回来时顺手查一次有没有新版本
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && swReg) swReg.update().catch(() => {});
   });
 }
 

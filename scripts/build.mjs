@@ -63,7 +63,10 @@ if (withSite) {
   copyFileSync(at('dist/textural.iife.min.js'), at('site/textural.js'));
   // PWA：manifest / service worker 必须在站点根，静态资源放 assets/
   copyFileSync(at('demo/manifest.webmanifest'), at('site/manifest.webmanifest'));
-  copyFileSync(at('demo/sw.js'), at('site/sw.js'));
+  // sw.js 里注入版本号当缓存名 → 每次发版自动作废旧缓存
+  const sw = readFileSync(at('demo/sw.js'), 'utf8');
+  if (!sw.includes('__BUILD_VERSION__')) throw new Error('注入 SW 缓存版本失败：demo/sw.js 里找不到 __BUILD_VERSION__');
+  writeFileSync(at('site/sw.js'), sw.replace('__BUILD_VERSION__', version));
   cpSync(at('demo/assets'), at('site/assets'), { recursive: true });
   writeFileSync(at('site/.nojekyll'), '');
   console.log(`site/ 已组装（index.html + textural.js + PWA 资源，版本号 v${version}）`);

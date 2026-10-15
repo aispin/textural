@@ -1,6 +1,11 @@
 /* Textural 落地页的 Service Worker：只为可安装 + 离线打开这页，不做花活。
-   作用域 = /textural/，不会影响同域下的其它页面。 */
-const CACHE = 'textural-v1';
+   作用域 = /textural/，不会影响同域下的其它页面。
+
+   缓存策略：**网络优先**（在线永远拿最新，断网才回落缓存）。
+   早先这里是 cache-first，导致老访客一直吃到旧的 textural.js ——
+   新 HTML 已经有「下载 SVG」按钮、旧 JS 里却没有 toSVG()，
+   于是报 `toSVG is not a function`。缓存名带版本号，每次发版自动作废旧缓存。 */
+const CACHE = 'textural-__BUILD_VERSION__';
 const SHELL = [
   './',
   './index.html',
@@ -18,8 +23,14 @@ const SHELL = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
+    // 不在这里 skipWaiting：新版本先待命，等页面上的提示被用户点过再接管，
+    // 免得把正在调参的人静默刷掉。
+    caches.open(CACHE).then(c => c.addAll(SHELL))
   );
+});
+
+self.addEventListener('message', e => {
+  if(e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
@@ -37,26 +48,17 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if(req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
 
-  // 导航请求：网络优先（改版后立刻可见），断网回落缓存
-  if(req.mode === 'navigate'){
-    e.respondWith(
-      fetch(req)
-        .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put('./index.html', copy));
-          return res;
-        })
-        .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
-    );
-    return;
-  }
+  const isNavigate = req.mode === 'navigate';
+  // 导航请求统一缓存到 './index.html'，离线时用最后一份页面兜底
+  const cacheKey = isNavigate ? './index.html' : req;
 
-  // 静态资源：缓存优先，后台补一份
   e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
-      return res;
-    }))
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(cacheKey, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(cacheKey).then(hit => hit || caches.match('./index.html')))
   );
 });
